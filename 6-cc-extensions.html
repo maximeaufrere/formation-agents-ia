@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Claude Code : extensions · Comprendre les agents IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="cc-extensions">
+<div class="shell">
+  <nav class="toc" id="toc" aria-label="Sommaire"></nav>
+
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Partie 2 · Claude Code · Page 6</p>
+      <h1>Claude Code : extensions</h1>
+      <p class="lead">Personnaliser Claude Code : commandes, skills, sous-agents, plugins, hooks et serveurs MCP.</p>
+      <div class="page-meta" id="page-meta"></div>
+    </header>
+
+    <section class="chap" id="c18" data-title="Commandes, skills, sous-agents, plugins">
+      <div class="chap-head"><span class="chap-num">18</span><h2>Commandes, skills, sous-agents et plugins</h2></div>
+      <p class="goal">Personnaliser Claude Code et partager des savoir-faire avec l'équipe.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>Claude Code se personnalise avec quatre mécanismes, que tu connais déjà sur le principe :</p>
+        <div class="cols">
+          <div class="card"><h4>Commandes « / »</h4><p>Raccourcis que tu tapes toi-même. Intégrées (<code>/help</code>, <code>/clear</code>, <code>/compact</code>, <code>/init</code>, <code>/model</code>, <code>/usage</code>, <code>/resume</code>) ou écrites par toi.</p></div>
+          <div class="card"><h4>Skills</h4><p>Procédures que Claude charge tout seul quand la tâche s'y prête (chapitre <a href="3-memoire-extensions.html#c11">11</a>).</p></div>
+          <div class="card"><h4>Sous-agents</h4><p>Assistants spécialisés au contexte séparé, auxquels Claude délègue (chapitre <a href="4-multi-securite-prod.html#c12">12</a>).</p></div>
+          <div class="card"><h4>Plugins</h4><p>Paquets qui regroupent commandes, skills, sous-agents, hooks et serveurs MCP, pour les installer en une fois.</p></div>
+        </div>
+        <p>Tape <code>/</code> dans une session pour voir toutes les commandes disponibles.</p>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Créer une commande personnalisée</h3>
+        <p>Un fichier Markdown dans <code>.claude/commands/</code> devient une commande. Le contenu est le prompt ; <code>$ARGUMENTS</code> reçoit ce que tu tapes après le nom. Les commandes ont depuis été fusionnées avec les skills : <code>.claude/commands/revue.md</code> et <code>.claude/skills/revue/SKILL.md</code> créent la même commande <code>/revue</code>, et les fichiers de commandes existants continuent de fonctionner. La documentation recommande les skills pour les nouveaux usages (fichiers annexes, chargement automatique).</p>
+        <span class="fname">.claude/commands/revue.md</span>
+<pre class="code"><code>---
+description: Relit les modifications en cours
+---
+Relis les modifications non commitées (git diff) pour : $ARGUMENTS
+Liste les bogues probables, les cas limites non testés et les problèmes de lisibilité.
+Ne modifie aucun fichier.</code></pre>
+        <p>Usage : <code>/revue la gestion des erreurs</code>.</p>
+        <h3>Créer un sous-agent</h3>
+        <p>Un fichier Markdown dans <code>.claude/agents/</code> décrit un spécialiste : son nom, sa description (quand le solliciter), les outils autorisés et éventuellement le modèle. Demande à Claude de créer ou gérer des sous-agents, ou édite directement ces dossiers : la commande <code>/agents</code> affiche désormais ce rappel au lieu d'ouvrir un assistant.</p>
+        <span class="fname">.claude/agents/relecteur.md</span>
+<pre class="code"><code>---
+name: relecteur
+description: Relit du code modifié. À utiliser après une modification importante.
+tools: Read, Grep, Glob, Bash
+model: sonnet
+---
+Tu es un relecteur de code exigeant. Examine les changements récents (git diff).
+Renvoie une liste courte classée par gravité, avec fichier et ligne pour chaque remarque.
+N'écris jamais dans les fichiers.</code></pre>
+        <h3>Où ranger quoi ?</h3>
+        <p>Dans le dossier <code>.claude/</code> du projet (partagé via Git) ou dans <code>~/.claude/</code> (personnel). Les skills vont dans <code>.claude/skills/&lt;nom&gt;/SKILL.md</code>.</p>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Choisir le bon mécanisme</h3>
+        <div class="scroll-x"><table>
+          <thead><tr><th>Besoin</th><th>Mécanisme</th><th>Pourquoi</th></tr></thead>
+          <tbody>
+            <tr><td>Règle valable à chaque session</td><td>CLAUDE.md</td><td>Toujours chargé</td></tr>
+            <tr><td>Règle à appliquer sans exception</td><td>Hook / permission</td><td>Exécuté par le programme, pas par le modèle</td></tr>
+            <tr><td>Procédure que tu déclenches à la demande</td><td>Commande « / »</td><td>Explicite, prévisible</td></tr>
+            <tr><td>Procédure que Claude doit repérer seul</td><td>Skill</td><td>Chargement selon la description</td></tr>
+            <tr><td>Recherche ou revue volumineuse</td><td>Sous-agent</td><td>Contexte isolé, seul le résumé revient</td></tr>
+            <tr><td>Accès à un système externe</td><td>Serveur MCP</td><td>Capacité, pas procédure</td></tr>
+            <tr><td>Distribuer tout cela à l'équipe</td><td>Plugin</td><td>Installation en une fois, versionné</td></tr>
+          </tbody>
+        </table></div>
+        <ul class="clean">
+          <li><b>Sous-agents :</b> chacun a sa propre fenêtre de contexte et ses outils restreints. Le coordinateur décide de déléguer d'après la <i>description</i> : soigne-la (quand l'utiliser, quel résultat attendre). Les sous-agents peuvent tourner en parallèle, au prix d'une consommation de tokens plus élevée (chapitre <a href="4-multi-securite-prod.html#c12">12</a>).</li>
+          <li><b>Choix du modèle par sous-agent :</b> un petit modèle rapide pour la recherche ou la revue légère, un plus grand pour le raisonnement difficile : bon levier coût/qualité.</li>
+          <li><b>Plugins :</b> un plugin contient un manifeste et des dossiers de composants. On les distribue via des « marketplaces » (dépôts Git listant des plugins). Applique les règles de chaîne d'approvisionnement : relis avant d'installer, épingle les versions.</li>
+          <li><b>Coût en contexte :</b> les descriptions de toutes les skills, commandes et sous-agents chargés occupent de la place en permanence. N'active que ce qui sert.</li>
+        </ul>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Commandes, skills, sous-agents, plugins : quatre façons de personnaliser Claude Code.</li>
+          <li>Règle sans exception : hook ou permission. Règle de chaque session : CLAUDE.md.</li>
+          <li>Un sous-agent isole une recherche volumineuse ; un plugin distribue le tout à l'équipe.</li>
+          <li>Les descriptions chargées occupent du contexte : n'active que ce qui sert.</li>
+        </ul>
+        <p>Suite : <a href="6-cc-extensions.html#c19">Chapitre 19 · Hooks : automatisations garanties</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c18" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <section class="chap" id="c19" data-title="Hooks : automatisations garanties">
+      <div class="chap-head"><span class="chap-num">19</span><h2>Hooks : des automatisations garanties</h2></div>
+      <p class="goal">Exécuter du code à des moments précis du cycle de vie, de façon déterministe.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>Un <code>hook</code> (« crochet ») est une commande que <b>Claude Code exécute automatiquement</b> à un moment précis : avant ou après l'utilisation d'un outil, quand tu envoies un message, quand Claude a fini de répondre…</p>
+        <div class="callout analogy">
+          <b>Analogie : la ceinture de sécurité vs le conseil de prudence</b>
+          <p>Écrire « formate toujours le code » dans CLAUDE.md, c'est un conseil : Claude l'oubliera parfois. Un hook qui lance le formateur après chaque modification, c'est une ceinture : ça se produit à chaque fois, quoi que pense le modèle.</p>
+        </div>
+        <p>Exemples utiles : formater le code après chaque édition, bloquer certaines commandes dangereuses, lancer les tests quand Claude termine, envoyer une notification quand il attend ta réponse, journaliser les actions pour audit.</p>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Les principaux moments (événements)</h3>
+        <div class="scroll-x"><table>
+          <thead><tr><th>Événement</th><th>Quand</th><th>Usage typique</th></tr></thead>
+          <tbody>
+            <tr><td><code>PreToolUse</code></td><td>Avant l'exécution d'un outil</td><td>Bloquer ou valider une commande</td></tr>
+            <tr><td><code>PostToolUse</code></td><td>Après l'exécution d'un outil</td><td>Formater, linter, journaliser</td></tr>
+            <tr><td><code>UserPromptSubmit</code></td><td>Quand tu envoies un message</td><td>Ajouter du contexte, filtrer</td></tr>
+            <tr><td><code>Notification</code></td><td>Quand Claude t'attend</td><td>Alerte sonore ou message</td></tr>
+            <tr><td><code>Stop</code> / <code>SubagentStop</code></td><td>Quand Claude (ou un sous-agent) a fini</td><td>Lancer les tests, vérifier</td></tr>
+            <tr><td><code>PreCompact</code></td><td>Avant la compaction du contexte</td><td>Sauvegarder des informations</td></tr>
+            <tr><td><code>SessionStart</code> / <code>SessionEnd</code></td><td>Début / fin de session</td><td>Charger l'état, nettoyer</td></tr>
+          </tbody>
+        </table></div>
+        <p>Il existe d'autres événements (par exemple <code>PermissionRequest</code>, <code>PostToolUseFailure</code>, <code>SubagentStart</code>, <code>PostCompact</code>, <code>ConfigChange</code>) : consulte la documentation officielle pour la liste à jour.</p>
+        <h3>Configuration</h3>
+        <p>Dans un fichier de réglages, on associe un événement, un filtre sur le nom de l'outil (<code>matcher</code>) et une commande :</p>
+        <span class="fname">.claude/settings.json</span>
+<pre class="code"><code>{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command",
+            "command": "jq -r '.tool_input.file_path' | xargs npx prettier --write" }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+        <p>Le hook reçoit en entrée standard un document JSON décrivant l'événement (outil, arguments, session). La commande <code>/hooks</code> permet de les consulter.</p>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Contrôler Claude depuis un hook</h3>
+        <ul class="clean">
+          <li><b>Code de sortie 0 :</b> succès, on continue.</li>
+          <li><b>Code de sortie 2 :</b> <i>blocage</i>. Pour <code>PreToolUse</code>, l'outil n'est pas exécuté ; le contenu de <code>stderr</code> est renvoyé à Claude, qui peut ajuster sa démarche. Pour <code>Stop</code>, Claude est empêché de s'arrêter et poursuit son travail.</li>
+          <li><b>Sortie JSON :</b> un hook peut aussi renvoyer un objet JSON pour des décisions fines (autoriser, refuser, demander confirmation, ajouter du contexte).</li>
+          <li><b>Rapport avec les permissions :</b> un hook qui bloque (code 2) agit avant les règles <code>allow</code>. À l'inverse, un hook qui répond « autoriser » ne contourne jamais une règle <code>deny</code> ou <code>ask</code>.</li>
+        </ul>
+        <h3>Exemple : garde-fou contre les commandes destructrices</h3>
+        <span class="fname">.claude/hooks/garde.py (déclaré en PreToolUse, matcher « Bash »)</span>
+<pre class="code"><code>import json, sys
+
+data = json.load(sys.stdin)                     # événement reçu en JSON
+cmd = data.get("tool_input", {}).get("command", "")
+
+INTERDITS = ("rm -rf /", "git push --force", "DROP TABLE")
+if any(motif in cmd for motif in INTERDITS):
+    print("Commande bloquée par la politique du projet.", file=sys.stderr)
+    sys.exit(2)                                 # 2 = bloquer, message renvoyé à Claude
+sys.exit(0)</code></pre>
+        <h3>Bonnes pratiques et pièges</h3>
+        <ul class="clean">
+          <li><b>Les hooks s'exécutent avec tes droits</b>, sans validation. Un hook malveillant (ou un dépôt cloné qui en apporte) peut tout faire. Relis les hooks d'un projet avant d'ouvrir une session dedans.</li>
+          <li><b>Rapides et idempotents :</b> un hook lent ralentit chaque action ; un hook relancé deux fois ne doit rien casser. Prévois des délais d'attente.</li>
+          <li><b>Filtre étroit :</b> utilise <code>matcher</code> pour ne déclencher que sur les outils concernés.</li>
+          <li><b>Ne pas dupliquer la sandbox :</b> un hook qui filtre des chaînes de caractères est contournable (autre syntaxe, autre commande équivalente). Pour une garantie forte, combine hook, règles <code>deny</code> et sandbox.</li>
+          <li><b>Sorties lisibles :</b> les messages renvoyés à Claude doivent dire quoi faire à la place (« utilise un chemin précis »), pas seulement « interdit ».</li>
+          <li><b>Cas avancés :</b> un hook <code>Stop</code> qui lance la suite de tests et renvoie les échecs force Claude à continuer jusqu'au vert : c'est la boucle de vérification, rendue obligatoire.</li>
+        </ul>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Un hook est une commande exécutée par le programme à un événement précis, sans dépendre du modèle.</li>
+          <li>Code de sortie 2 : l'action est bloquée et le message revient à Claude.</li>
+          <li>Un hook s'exécute avec tes droits : relis ceux d'un dépôt avant d'y ouvrir une session.</li>
+          <li>Un hook <code>Stop</code> qui lance les tests force Claude à continuer jusqu'au vert.</li>
+        </ul>
+        <p>Suite : <a href="6-cc-extensions.html#c20">Chapitre 20 · MCP dans Claude Code</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c19" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <section class="chap" id="c20" data-title="MCP dans Claude Code">
+      <div class="chap-head"><span class="chap-num">20</span><h2>MCP dans Claude Code</h2></div>
+      <p class="goal">Brancher Claude Code à tes outils (tickets, bases, documentation) de façon sûre.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>Grâce à MCP (chapitre <a href="3-memoire-extensions.html#c10">10</a>), Claude Code peut sortir de ton dépôt : lire un ticket, consulter la documentation interne, interroger une base de données de test, créer une pull request. On « branche » un serveur MCP avec une commande, puis ses outils apparaissent dans la session.</p>
+        <p>Exemples de demandes rendues possibles : « Lis le ticket PROJ-123 et implémente-le », « Compare ce schéma avec la base de préproduction », « Résume les erreurs remontées par l'outil de supervision cette nuit ».</p>
+        <div class="callout warn">
+          <b>Rappel de sécurité</b>
+          <p>Chaque serveur connecté donne un pouvoir de plus à l'agent. Branche seulement des serveurs de confiance et, au départ, avec un accès en lecture seule.</p>
+        </div>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Ajouter un serveur</h3>
+<pre class="code"><code># Serveur distant (HTTP)
+claude mcp add --transport http mon-service https://exemple.com/mcp
+
+# Serveur local (processus lancé par Claude Code, transport stdio)
+claude mcp add --transport stdio --env DB_URL=postgres://lecture-seule@localhost/test ma-base -- npx -y serveur-mcp-base
+
+claude mcp list          # voir les serveurs configurés
+/mcp                     # dans la session : état, authentification (OAuth)</code></pre>
+        <h3>Trois portées de configuration</h3>
+        <div class="scroll-x"><table>
+          <thead><tr><th>Portée</th><th>Stockage</th><th>Usage</th></tr></thead>
+          <tbody>
+            <tr><td><b>local</b> (défaut)</td><td>Privé, propre à toi et à ce projet</td><td>Essais, identifiants personnels</td></tr>
+            <tr><td><b>project</b></td><td>Fichier <code>.mcp.json</code> à la racine, versionné</td><td>Serveurs partagés par l'équipe (approbation demandée à l'ouverture)</td></tr>
+            <tr><td><b>user</b></td><td>Config personnelle, tous projets</td><td>Outils que tu utilises partout</td></tr>
+          </tbody>
+        </table></div>
+        <p>Les outils d'un serveur sont nommés <code>mcp__serveur__outil</code> : on peut donc écrire des règles de permission précises (<code>allow</code> pour la lecture, <code>ask</code> pour l'écriture).</p>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Partager la configuration d'équipe</h3>
+        <span class="fname">.mcp.json (racine du projet)</span>
+<pre class="code"><code>{
+  "mcpServers": {
+    "tickets": {
+      "type": "http",
+      "url": "https://tickets.exemple.com/mcp"
+    },
+    "base-test": {
+      "command": "npx",
+      "args": ["-y", "serveur-mcp-base"],
+      "env": { "DB_URL": "${DB_URL_TEST}" }
+    }
+  }
+}</code></pre>
+        <p>Les variables d'environnement (<code>${DB_URL_TEST}</code>) évitent de versionner des secrets : chaque développeur fournit les siens.</p>
+        <ul class="clean">
+          <li><b>Coût en contexte :</b> comme pour tout serveur MCP (chapitre <a href="3-memoire-extensions.html#c10">10</a>, niveau 3), les définitions d'outils occupent le contexte : désactive les serveurs inutiles pour la tâche. Certaines configurations chargent les outils à la demande plutôt que tous d'avance.</li>
+          <li><b>Taille des sorties :</b> un outil qui renvoie des dizaines de milliers de tokens sature la fenêtre. Un serveur bien conçu pagine et filtre.</li>
+          <li><b>Moindre privilège :</b> jeton en lecture seule pour la base de test, jamais les identifiants de production, portée minimale pour les API (principe : chapitre <a href="4-multi-securite-prod.html#c13">13</a>).</li>
+          <li><b>Confiance et injection :</b> le contenu récupéré via MCP est une donnée non fiable (chapitre <a href="4-multi-securite-prod.html#c13">13</a>) : vérifie les actions qui en découlent.</li>
+          <li><b>Approbation des serveurs de projet :</b> un <code>.mcp.json</code> versionné lance du code sur ta machine ; examine-le avant d'accepter, notamment après un <code>git pull</code> qui le modifie.</li>
+          <li><b>Écrire ton propre serveur :</b> quand l'outil n'existe pas, un petit serveur (voir le chapitre <a href="3-memoire-extensions.html#c10">10</a> niveau 3) qui expose 3 ou 4 opérations ciblées vaut mieux qu'un accès générique à toute l'API.</li>
+        </ul>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li><code>claude mcp add</code> branche un serveur (HTTP distant ou stdio local).</li>
+          <li>Trois portées : local, project (<code>.mcp.json</code> versionné), user.</li>
+          <li>Les outils se nomment <code>mcp__serveur__outil</code> : des permissions fines sont possibles.</li>
+          <li>Le contenu récupéré via MCP est une donnée non fiable ; jetons à portée minimale.</li>
+        </ul>
+        <p>Suite : <a href="7-cc-automatiser.html#c21">Chapitre 21 · Automatisation : mode non interactif, SDK, CI</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c20" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <div class="miniquiz" data-quiz="cc-extensions"></div>
+
+    <div class="pager" id="pager"></div>
+
+    <footer>
+      <p>Support de formation interne. Les noms de produits cités le sont à titre d'exemple. Claude Code et l'écosystème évoluent vite : noms de commandes, options, chemins de configuration et fonctionnalités peuvent changer. Vérifie toujours la documentation officielle à jour avant de t'appuyer sur un détail, et consulte la politique IA de ton entreprise.</p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

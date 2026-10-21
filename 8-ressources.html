@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ressources · Comprendre les agents IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="ressources">
+<div class="shell">
+  <nav class="toc" id="toc" aria-label="Sommaire"></nav>
+
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Ressources · Page 8</p>
+      <h1>Ressources</h1>
+      <p class="lead">Quiz final, aide-mémoire Claude Code et glossaire.</p>
+      <div class="page-meta" id="page-meta"></div>
+    </header>
+
+    <section class="chap" id="quiz" data-title="Quiz final">
+      <div class="chap-head"><span class="chap-num">Q</span><h2>Quiz final</h2></div>
+      <p class="goal">Douze questions pour vérifier ce que tu as retenu. Les réponses sont expliquées.</p>
+      <div id="quiz-root"></div>
+    </section>
+
+    <section class="chap" id="aide-memoire" data-title="Aide-mémoire Claude Code">
+      <div class="chap-head"><span class="chap-num">Aide</span><h2>Aide-mémoire Claude Code</h2></div>
+      <p class="goal">Commandes, raccourcis, fichiers et réglages sur une seule page. Chaque ligne renvoie au chapitre qui l'explique.</p>
+      <div id="cheat"></div>
+    </section>
+
+    <section class="chap" id="glossaire" data-title="Glossaire">
+      <div class="chap-head"><span class="chap-num">A–Z</span><h2>Glossaire</h2></div>
+      <label for="gl-q" style="display:block;margin-bottom:6px">Filtrer les termes :</label>
+      <input id="gl-q" class="gl-search" type="search" placeholder="Ex. : token, hook, MCP…" autocomplete="off">
+      <dl class="gl" id="gl-list"></dl>
+    </section>
+
+    <div class="pager" id="pager"></div>
+
+    <footer>
+      <p>Support de formation interne. Les noms de produits cités le sont à titre d'exemple. Claude Code et l'écosystème évoluent vite : noms de commandes, options, chemins de configuration et fonctionnalités peuvent changer. Vérifie toujours la documentation officielle à jour avant de t'appuyer sur un détail, et consulte la politique IA de ton entreprise.</p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

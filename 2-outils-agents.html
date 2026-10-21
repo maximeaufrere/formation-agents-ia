@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Outils et agents · Comprendre les agents IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="outils-agents">
+<div class="shell">
+  <nav class="toc" id="toc" aria-label="Sommaire"></nav>
+
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Partie 1 · Fondamentaux · Page 2</p>
+      <h1>Outils et agents</h1>
+      <p class="lead">Comment un modèle agit sur le monde grâce à des outils, ce qu&#x27;est la boucle d&#x27;un agent, et quand préférer un workflow.</p>
+      <div class="page-meta" id="page-meta"></div>
+    </header>
+
+    <section class="chap" id="c6" data-title="Les outils (tool use)">
+      <div class="chap-head"><span class="chap-num">06</span><h2>Les outils : donner des mains au modèle</h2></div>
+      <p class="goal">Comprendre comment un modèle « appelle » une application, jusqu'au format exact des messages.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>Un <code>outil</code> (<i>tool</i>) est une fonction que le modèle peut demander à utiliser : chercher sur le web, lire un fichier, interroger une base, envoyer un email, exécuter du code, créer un ticket…</p>
+        <p>Point essentiel : <b>le modèle n'exécute rien lui-même</b>. Il écrit une demande structurée (« appelle <code>chercher_salles</code> avec <code>date=mardi</code> »). Le programme qui l'entoure exécute réellement l'outil et renvoie le résultat, que le modèle lit avant de continuer.</p>
+        <div class="diagram">
+          <svg viewBox="0 0 640 170" role="img" aria-label="Le modèle demande un outil, le programme l'exécute et renvoie le résultat">
+            <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker></defs>
+            <rect class="box-a" x="10" y="50" width="160" height="70" rx="10"/><text x="90" y="82" text-anchor="middle" font-weight="700">Modèle (LLM)</text><text class="sm" x="90" y="102" text-anchor="middle">réfléchit et demande</text>
+            <rect class="box" x="240" y="50" width="160" height="70" rx="10"/><text x="320" y="82" text-anchor="middle" font-weight="700">Programme</text><text class="sm" x="320" y="102" text-anchor="middle">exécute pour de vrai</text>
+            <rect class="box-w" x="470" y="50" width="160" height="70" rx="10"/><text x="550" y="82" text-anchor="middle" font-weight="700">Outil</text><text class="sm" x="550" y="102" text-anchor="middle">agenda, web, fichiers…</text>
+            <path class="ln" d="M170 70 H238" marker-end="url(#ar)"/><text class="sm" x="204" y="62" text-anchor="middle">① demande</text>
+            <path class="ln" d="M400 70 H468" marker-end="url(#ar)"/><text class="sm" x="434" y="62" text-anchor="middle">② appel</text>
+            <path class="ln" d="M468 105 H402" marker-end="url(#ar)"/><text class="sm" x="434" y="124" text-anchor="middle">③ résultat</text>
+            <path class="ln" d="M238 105 H172" marker-end="url(#ar)"/><text class="sm" x="204" y="124" text-anchor="middle">④ résultat lu</text>
+          </svg>
+          <p class="caption">Le modèle décide, le programme exécute.</p>
+        </div>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Comment le modèle connaît les outils</h3>
+        <p>À chaque appel, on lui transmet la liste des outils disponibles, chacun décrit par un <b>nom</b>, une <b>description</b> en langage naturel et un <b>schéma JSON</b> des paramètres. Le modèle décide, d'après l'objectif et ces descriptions, s'il répond directement ou s'il appelle un outil, et avec quels arguments.</p>
+        <h3>Deux familles d'outils</h3>
+        <ul class="clean">
+          <li><b>Outils côté client :</b> tu les codes et les exécutes (accès à ta base, à ton CRM). Tu renvoies le résultat au modèle.</li>
+          <li><b>Outils côté serveur :</b> fournis et exécutés par le fournisseur (recherche web, exécution de code). Le résultat revient directement dans la réponse.</li>
+        </ul>
+        <h3>Détails qui comptent</h3>
+        <ul class="clean">
+          <li>Le modèle peut demander <b>plusieurs outils en parallèle</b> dans une même réponse (par exemple lire trois fichiers).</li>
+          <li>Quand un outil échoue, <b>renvoie l'erreur au modèle sous forme de texte clair</b> : il saura souvent corriger (mauvais paramètre, fichier introuvable).</li>
+          <li>Les outils sont <b>la principale surface de risque</b> : ce que l'outil peut faire, l'agent peut le faire (chapitre <a href="4-multi-securite-prod.html#c13">13</a>).</li>
+        </ul>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Le protocole exact (API Messages)</h3>
+        <p>1) Tu déclares l'outil avec un schéma :</p>
+        <span class="fname">définition de l'outil</span>
+<pre class="code"><code>{
+  "name": "chercher_salles",
+  "description": "Liste les salles de réunion libres pour une date. Renvoie nom et capacité.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "date":       { "type": "string",  "description": "Date au format AAAA-MM-JJ" },
+      "places_min": { "type": "integer", "description": "Capacité minimale" }
+    },
+    "required": ["date"]
+  }
+}</code></pre>
+        <p>2) Le modèle répond avec <code>stop_reason: "tool_use"</code> et un bloc de demande :</p>
+<pre class="code"><code>{ "type": "tool_use", "id": "toolu_01A", "name": "chercher_salles",
+  "input": { "date": "2026-10-27", "places_min": 8 } }</code></pre>
+        <p>3) Tu exécutes la fonction, puis tu renvoies un message utilisateur avec le résultat, lié par l'identifiant :</p>
+<pre class="code"><code>{ "type": "tool_result", "tool_use_id": "toolu_01A",
+  "content": "Rhône (10 places), Saône (8 places)" }</code></pre>
+        <h3>Concevoir de bons outils (l'« interface agent-ordinateur »)</h3>
+        <ul class="clean">
+          <li><b>Peu d'outils, bien nommés.</b> Trop d'outils proches dégradent le choix du modèle et coûtent des tokens à chaque appel. Regroupe ou préfixe par domaine (<code>tickets_creer</code>, <code>tickets_chercher</code>).</li>
+          <li><b>Descriptions écrites comme pour un nouveau collègue :</b> quand l'utiliser, quand ne pas l'utiliser, format des paramètres, exemples.</li>
+          <li><b>Résultats compacts et utiles :</b> renvoie des noms lisibles plutôt que des identifiants opaques, pagine, tronque, et explique comment affiner (« 200 résultats, ajoute un filtre »).</li>
+          <li><b>Messages d'erreur actionnables :</b> « date invalide, attendu AAAA-MM-JJ » plutôt que « erreur 400 ».</li>
+          <li><b>Idempotence et sécurité :</b> une action répétée par erreur (envoyer deux fois un email) ne doit pas faire de dégâts ; les actions destructrices demandent une confirmation.</li>
+          <li><b>Contrôle du choix :</b> le paramètre <code>tool_choice</code> permet de forcer un outil précis, d'en imposer un parmi plusieurs, ou d'interdire les outils.</li>
+        </ul>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Le modèle n'exécute rien : il demande un outil, le programme l'exécute et renvoie le résultat.</li>
+          <li>Un outil = un nom, une description, un schéma JSON des paramètres.</li>
+          <li>Peu d'outils, bien décrits, avec des erreurs lisibles.</li>
+          <li>Les outils sont la principale surface de risque.</li>
+        </ul>
+        <p>Suite : <a href="2-outils-agents.html#c7">Chapitre 7 · L'agent et sa boucle</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c6" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <section class="chap" id="c7" data-title="L&#x27;agent et sa boucle">
+      <div class="chap-head"><span class="chap-num">07</span><h2>L'agent : un modèle, des outils, une boucle</h2></div>
+      <p class="goal">Définir un agent et décrire son fonctionnement pas à pas, jusqu'au code de la boucle.</p>
+
+      <div class="lvl" data-lvl="1">
+        <div class="callout key">
+          <b>Définition</b>
+          <p>Un <code>agent IA</code> = un modèle (LLM) + des outils + un contexte + une <b>boucle</b> qui continue jusqu'à ce que l'objectif soit atteint (ou qu'une limite soit rencontrée).</p>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 640 200" role="img" aria-label="Cycle : réfléchir, agir, observer, recommencer ou conclure">
+            <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker></defs>
+            <rect class="box-w" x="20" y="70" width="130" height="60" rx="10"/><text x="85" y="97" text-anchor="middle" font-weight="700">1 · Réfléchir</text><text class="sm" x="85" y="115" text-anchor="middle">que faire ensuite ?</text>
+            <rect class="box-a" x="200" y="70" width="130" height="60" rx="10"/><text x="265" y="97" text-anchor="middle" font-weight="700">2 · Agir</text><text class="sm" x="265" y="115" text-anchor="middle">appeler un outil</text>
+            <rect class="box" x="380" y="70" width="130" height="60" rx="10"/><text x="445" y="97" text-anchor="middle" font-weight="700">3 · Observer</text><text class="sm" x="445" y="115" text-anchor="middle">lire le résultat</text>
+            <rect class="box-ok" x="545" y="70" width="85" height="60" rx="10"/><text x="587" y="97" text-anchor="middle" font-weight="700">4 · Fin</text><text class="sm" x="587" y="115" text-anchor="middle">objectif atteint</text>
+            <path class="ln" d="M150 100 H198" marker-end="url(#ar2)"/><path class="ln" d="M330 100 H378" marker-end="url(#ar2)"/><path class="ln" d="M510 100 H543" marker-end="url(#ar2)"/>
+            <path class="ln-a" d="M445 70 C445 20 85 20 85 68" marker-end="url(#ar2)"/><text class="sm" x="265" y="38" text-anchor="middle">pas fini : on recommence avec ce qu'on vient d'apprendre</text>
+          </svg>
+          <p class="caption">La boucle agentique.</p>
+        </div>
+        <div class="demo" id="demo-loop">
+          <span class="demo-label">Démo 2 · Regarder un agent travailler</span>
+          <p style="margin-top:0"><b>Objectif donné :</b> « Réserve une salle de 8 personnes mardi après-midi et préviens l'équipe. »</p>
+          <ol class="steps" id="loop-steps" aria-live="polite"></ol>
+          <div class="row">
+            <button class="btn" type="button" id="loop-next">Étape suivante</button>
+            <button class="btn ghost" type="button" id="loop-reset">Recommencer</button>
+            <span class="stat" id="loop-count"></span>
+          </div>
+        </div>
+        <p>À l'étape 6, la salle choisie était déjà prise. Un simple script aurait planté. L'agent a <b>lu l'erreur, changé de stratégie et réessayé</b> : c'est ce qui le distingue d'une automatisation figée.</p>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Ce qui se passe à chaque tour</h3>
+        <ol class="clean">
+          <li>Le programme envoie au modèle : consignes système, définitions d'outils, historique complet.</li>
+          <li>Le modèle répond soit par du texte final, soit par une ou plusieurs demandes d'outils.</li>
+          <li>S'il y a des demandes d'outils, le programme les exécute, ajoute les résultats à l'historique, et retourne à l'étape 1.</li>
+          <li>Sinon la boucle s'arrête.</li>
+        </ol>
+        <h3>Conditions d'arrêt</h3>
+        <ul class="clean">
+          <li><b>Succès :</b> le modèle juge l'objectif atteint (idéalement après une vérification).</li>
+          <li><b>Limite de tours</b> ou de budget : indispensable, pour éviter les boucles infinies et les factures surprises.</li>
+          <li><b>Blocage :</b> le modèle demande une précision ou une autorisation à l'humain.</li>
+          <li><b>Erreur irrécupérable</b> ou interruption par l'utilisateur.</li>
+        </ul>
+        <h3>Planification et auto-correction</h3>
+        <p>Pour les tâches longues, on demande à l'agent de tenir une <b>liste de tâches</b> (qu'il met à jour) et de <b>vérifier son travail</b> avant de conclure (relancer les tests, relire le résultat). Les agents qui se vérifient échouent beaucoup moins que ceux qui s'arrêtent à leur première tentative.</p>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>La boucle en code</h3>
+        <p>Toute la « magie » d'un agent tient en quelques lignes. Les frameworks ajoutent surtout de la robustesse (reprise sur erreur, journalisation, parallélisme).</p>
+        <span class="fname">boucle_agent.py</span>
+<pre class="code"><code>messages = [{"role": "user", "content": objectif}]
+
+for tour in range(MAX_TOURS):                      # plafond dur : jamais de boucle infinie
+    rep = client.messages.create(
+        model=MODEL, max_tokens=2048,
+        system=SYSTEME, tools=OUTILS, messages=messages,
+    )
+    messages.append({"role": "assistant", "content": rep.content})
+
+    if rep.stop_reason != "tool_use":              # plus d'outil demandé : réponse finale
+        break
+
+    resultats = []
+    for bloc in rep.content:
+        if bloc.type == "tool_use":
+            try:
+                sortie = executer(bloc.name, bloc.input)    # TON code, avec garde-fous
+            except Exception as e:
+                sortie = f"Erreur : {e}"                    # l'erreur revient au modèle
+            resultats.append({"type": "tool_result",
+                              "tool_use_id": bloc.id,
+                              "content": str(sortie)[:20000]})   # borne la taille
+    messages.append({"role": "user", "content": resultats})</code></pre>
+        <h3>Points d'ingénierie</h3>
+        <ul class="clean">
+          <li><b>Gestion du contexte :</b> borne la taille des sorties d'outils (comme dans le code ci-dessus) ; pour résumer ou élaguer l'historique, voir le chapitre <a href="3-memoire-extensions.html#c9">9</a>.</li>
+          <li><b>Reprise :</b> persister l'historique et l'état pour reprendre après une panne ; rendre les outils idempotents.</li>
+          <li><b>Observabilité :</b> journaliser chaque appel (entrée, sortie, durée, tokens). Sans trace, impossible de comprendre un échec.</li>
+          <li><b>Évaluer un agent :</b> mesurer le résultat final (la tâche est-elle réussie ?) <i>et</i> la trajectoire (nombre d'étapes, outils superflus, erreurs). Rejouer les mêmes tâches avant et après chaque changement.</li>
+          <li><b>Coût :</b> les agents consomment typiquement plusieurs fois plus de tokens qu'une simple conversation. Fixe un budget par tâche.</li>
+        </ul>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Un agent = un modèle + des outils + un contexte + une boucle (réfléchir, agir, observer).</li>
+          <li>Toujours une limite de tours ou de budget.</li>
+          <li>Il se corrige en lisant l'erreur renvoyée, là où un script figé planterait.</li>
+          <li>Mesure le résultat final et la trajectoire (étapes, outils superflus).</li>
+        </ul>
+        <p>Suite : <a href="2-outils-agents.html#c8">Chapitre 8 · Chatbot, workflow ou agent ?</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c7" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <section class="chap" id="c8" data-title="Chatbot, workflow ou agent ?">
+      <div class="chap-head"><span class="chap-num">08</span><h2>Chatbot, workflow ou agent ?</h2></div>
+      <p class="goal">Choisir le bon niveau d'autonomie pour un besoin donné.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>« Agent » est devenu un mot à la mode, appliqué à tout. <b>Plus d'autonomie veut dire plus de puissance, mais aussi plus d'imprévisibilité et de coût.</b></p>
+        <div class="scroll-x"><table>
+          <thead><tr><th></th><th>Chatbot</th><th>Workflow assisté par IA</th><th>Agent</th></tr></thead>
+          <tbody>
+            <tr><td><b>Qui décide des étapes ?</b></td><td>Personne : une seule réponse</td><td>Toi, en amont (étapes fixes)</td><td>Le modèle, en cours de route</td></tr>
+            <tr><td><b>Outils</b></td><td>Aucun ou peu</td><td>Appelés à des endroits prévus</td><td>Choisis et enchaînés librement</td></tr>
+            <tr><td><b>Prévisibilité</b></td><td>Élevée</td><td>Élevée</td><td>Moyenne à faible</td></tr>
+            <tr><td><b>Exemple</b></td><td>FAQ intelligente</td><td>Chaque facture reçue : extraire, classer, enregistrer</td><td>« Enquête sur cette baisse de ventes et propose un plan »</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout key">
+          <b>Conseil de praticien</b>
+          <p>Commence par la solution la plus simple qui marche. Si les étapes sont connues d'avance, un <i>workflow</i> est plus fiable, plus rapide et moins cher qu'un agent.</p>
+        </div>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Cinq schémas de workflow à connaître</h3>
+        <div class="scroll-x"><table>
+          <thead><tr><th>Schéma</th><th>Principe</th><th>Quand l'utiliser</th></tr></thead>
+          <tbody>
+            <tr><td><b>Enchaînement</b> (prompt chaining)</td><td>La sortie d'une étape alimente la suivante, avec des contrôles intermédiaires.</td><td>Tâche décomposable en étapes claires (rédiger puis traduire).</td></tr>
+            <tr><td><b>Routage</b></td><td>Une première étape classe la demande et l'oriente vers un traitement spécialisé.</td><td>Types de demandes très différents (facturation, technique, commercial).</td></tr>
+            <tr><td><b>Parallélisation</b></td><td>Plusieurs appels simultanés : sous-tâches indépendantes ou « votes ».</td><td>Gagner du temps ou fiabiliser par consensus.</td></tr>
+            <tr><td><b>Coordinateur et sous-agents</b></td><td>Un modèle découpe dynamiquement la tâche et délègue.</td><td>Sous-tâches non prévisibles (modifier plusieurs fichiers).</td></tr>
+            <tr><td><b>Évaluateur-optimiseur</b></td><td>Un modèle produit, un autre critique, on itère.</td><td>Critères de qualité clairs (traduction, code, rédaction).</td></tr>
+          </tbody>
+        </table></div>
+        <p>L'agent « pur » vient s'ajouter quand aucun de ces schémas ne suffit parce que le chemin dépend de ce qu'on découvre.</p>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Grille de décision</h3>
+        <div class="scroll-x"><table>
+          <thead><tr><th>Question</th><th>Si oui, penche vers…</th></tr></thead>
+          <tbody>
+            <tr><td>Les étapes sont-elles connues et stables ?</td><td>Workflow codé (voire sans IA pour la partie déterministe)</td></tr>
+            <tr><td>Le volume est-il élevé et le coût unitaire critique ?</td><td>Workflow avec petit modèle, étapes courtes</td></tr>
+            <tr><td>Peut-on vérifier automatiquement le résultat ?</td><td>Agent avec boucle de vérification (tests, validations)</td></tr>
+            <tr><td>Une erreur est-elle coûteuse ou irréversible ?</td><td>Workflow ou agent avec validation humaine avant l'effet</td></tr>
+            <tr><td>La latence doit-elle rester sous quelques secondes ?</td><td>Pas d'agent multi-tours en temps réel</td></tr>
+            <tr><td>Le chemin dépend de ce qu'on trouve en cours de route ?</td><td>Agent</td></tr>
+          </tbody>
+        </table></div>
+        <ul class="clean">
+          <li><b>Hybride :</b> la plupart des systèmes robustes sont des workflows dans lesquels certaines étapes sont des agents bornés (budget, outils limités).</li>
+          <li><b>Montée progressive :</b> démarre en workflow, mesure où il échoue faute de flexibilité, et n'ouvre l'autonomie que sur ces zones.</li>
+          <li><b>Coût total :</b> compare le coût par tâche <i>réussie</i> (tokens + relectures humaines + reprises), pas seulement le coût par appel.</li>
+        </ul>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Plus d'autonomie = plus de puissance, mais plus d'imprévisibilité et de coût.</li>
+          <li>Étapes connues d'avance : workflow. Chemin qui dépend de ce qu'on découvre : agent.</li>
+          <li>Cinq schémas de workflow : enchaînement, routage, parallélisation, coordinateur et sous-agents, évaluateur-optimiseur.</li>
+          <li>Commence par la solution la plus simple qui marche.</li>
+        </ul>
+        <p>Suite : <a href="3-memoire-extensions.html#c9">Chapitre 9 · Mémoire, contexte et RAG</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c8" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <div class="miniquiz" data-quiz="outils-agents"></div>
+
+    <div class="pager" id="pager"></div>
+
+    <footer>
+      <p>Support de formation interne. Les noms de produits cités le sont à titre d'exemple. Claude Code et l'écosystème évoluent vite : noms de commandes, options, chemins de configuration et fonctionnalités peuvent changer. Vérifie toujours la documentation officielle à jour avant de t'appuyer sur un détail, et consulte la politique IA de ton entreprise.</p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

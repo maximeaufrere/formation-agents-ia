@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bases du modèle · Comprendre les agents IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="bases">
+<div class="shell">
+  <nav class="toc" id="toc" aria-label="Sommaire"></nav>
+
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Partie 1 · Fondamentaux · Page 1</p>
+      <h1>Bases du modèle</h1>
+      <p class="lead">Ce qu&#x27;est un modèle de langage, comment il lit et écrit, comment lui parler, et pourquoi il ne suffit pas seul.</p>
+      <div class="page-meta" id="page-meta"></div>
+    </header>
+
+    <section class="chap" id="c1" data-title="Pourquoi les agents ?">
+
+      <div class="chap-head"><span class="chap-num">01</span><h2>Pourquoi parle-t-on d'agents ?</h2></div>
+      <p class="goal">Situer un agent par rapport à un chatbot et à une automatisation classique.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>Vous avez sans doute déjà utilisé un assistant comme ChatGPT ou Claude : on pose une question, il répond. C'est utile, mais la réponse reste du texte. Pour appliquer le résultat, c'est toi qui copies, colles, cliques, vérifies.</p>
+        <p>Un <b>agent IA</b> va un cran plus loin : on lui donne un <i>objectif</i> (« prépare le compte rendu de la réunion et envoie-le aux participants »), et il se débrouille pour y arriver. Il lit des fichiers, appelle des applications, vérifie son travail, corrige, et s'arrête quand c'est fini.</p>
+        <div class="cols">
+          <div class="card"><span class="tag">Chatbot</span><h4>Il répond</h4><p>Tu poses une question, il produit du texte. Tu fais le reste toi-même.</p></div>
+          <div class="card"><span class="tag">Agent</span><h4>Il agit</h4><p>Tu donnes un but. Il enchaîne plusieurs actions, observe le résultat et s'adapte.</p></div>
+        </div>
+        <div class="callout analogy">
+          <b>Une image pour retenir</b>
+          <p>Le chatbot est un consultant que tu appelles au téléphone : il te conseille, mais ne touche à rien chez toi. L'agent est un collaborateur à qui tu confies un dossier : il a un accès à tes outils et revient te voir avec le travail fait.</p>
+        </div>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>L'autonomie est un curseur, pas un interrupteur</h3>
+        <p>On parle de systèmes <i>agentiques</i> dès que le modèle contrôle une partie du déroulement. Anthropic distingue deux familles : les <b>workflows</b>, où le chemin est écrit dans du code, et les <b>agents</b>, où le modèle choisit lui-même les étapes et les outils selon ce qu'il observe (voir le chapitre <a href="2-outils-agents.html#c8">8</a>).</p>
+        <p>Les agents sont adaptés aux problèmes ouverts où l'on ne peut pas prévoir le nombre d'étapes. En contrepartie ils sont plus lents, plus chers et moins prévisibles.</p>
+        <h3>Les quatre ingrédients</h3>
+        <div class="cols">
+          <div class="card"><h4>1. Un modèle</h4><p>Le « cerveau » qui comprend l'objectif et décide.</p></div>
+          <div class="card"><h4>2. Des outils</h4><p>Les « mains » : lire, écrire, chercher, appeler des API.</p></div>
+          <div class="card"><h4>3. Un contexte</h4><p>La « mémoire de travail » : objectif, consignes, historique.</p></div>
+          <div class="card"><h4>4. Une boucle</h4><p>Le « moteur » : agir, observer, recommencer jusqu'à la fin.</p></div>
+        </div>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Formalisation et pourquoi les agents échouent</h3>
+        <p>Formellement, un agent est une <b>politique</b> qui, à chaque pas, choisit une action (appel d'outil ou réponse finale) à partir de l'historique des observations. Le modèle joue ce rôle. L'article fondateur <i>ReAct</i> (Yao et al., 2022) a montré qu'alterner raisonnement et action dans le même fil de texte améliore nettement les résultats sur des tâches interactives.</p>
+        <p>Le piège principal est <b>la composition des erreurs</b>. Si chaque étape réussit avec la probabilité <i>p</i>, une tâche de <i>n</i> étapes réussit avec <i>pⁿ</i> (en supposant des erreurs indépendantes et non rattrapées). Manipule les curseurs :</p>
+        <div class="demo">
+          <span class="demo-label">Démo · Fiabilité d'une chaîne d'étapes</span>
+          <div class="sliders">
+            <label for="rel-p">Fiabilité par étape</label><input id="rel-p" type="range" min="70" max="100" value="95"><span class="stat" id="rel-p-v">95 %</span>
+            <label for="rel-n">Nombre d'étapes</label><input id="rel-n" type="range" min="1" max="40" value="10"><span class="stat" id="rel-n-v">10</span>
+          </div>
+          <p style="margin-bottom:0">Chances de réussir toute la tâche : <span class="big" id="rel-out">60 %</span></p>
+          <div class="meter" aria-hidden="true"><i id="rel-bar" style="background:var(--l3)"></i></div>
+        </div>
+        <p>Leçons d'ingénierie qui en découlent : réduire le nombre d'étapes, rendre chaque étape vérifiable (tests, validations), permettre à l'agent de <i>se corriger</i> grâce à un retour objectif, et placer un point de contrôle humain là où l'erreur coûte cher. C'est le fil rouge de ce support.</p>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Un chatbot répond ; un agent agit : il enchaîne des actions pour atteindre un objectif.</li>
+          <li>Quatre ingrédients : un modèle, des outils, un contexte, une boucle.</li>
+          <li>Workflow : le chemin est écrit d'avance. Agent : le modèle choisit le chemin.</li>
+          <li>Les erreurs se composent : plus il y a d'étapes, plus le risque monte (0,95 puissance 10 donne environ 60 %).</li>
+        </ul>
+        <p>Suite : <a href="1-bases.html#c2">Chapitre 2 · Le modèle de langage (LLM)</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c1" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <section class="chap" id="c2" data-title="Le modèle de langage (LLM)">
+      <div class="chap-head"><span class="chap-num">02</span><h2>Le modèle de langage (LLM)</h2></div>
+      <p class="goal">Savoir ce que fait réellement un LLM, comment il est fabriqué, et ce qu'il ne fait pas.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>Un <code>LLM</code> (<i>Large Language Model</i>, « grand modèle de langage ») est un programme entraîné sur d'énormes quantités de textes : livres, sites web, code, conversations. Son talent unique : <b>prédire la suite la plus probable d'un texte</b>.</p>
+        <div class="callout analogy">
+          <b>Analogie : la saisie prédictive, en très grand</b>
+          <p>Sur ton téléphone, si tu écris « Bonne », il te propose « journée ». Un LLM fait la même chose, mais avec une culture immense et la capacité de tenir compte de pages entières de contexte. Il choisit un mot, l'ajoute, puis recommence pour le suivant, des centaines de fois.</p>
+        </div>
+        <div class="cols">
+          <div class="card"><span class="tag">Fort pour</span><p>Reformuler, résumer, classer, extraire des informations, traduire, générer du code et du texte, expliquer.</p></div>
+          <div class="card"><span class="tag">Faible pour</span><p>Calculs exacts, faits très récents ou pointus, savoir ce qu'il ne sait pas, accéder à tes données privées.</p></div>
+        </div>
+        <p>Modèles connus : Claude (Anthropic), GPT (OpenAI), Gemini (Google), Llama (Meta), Mistral. Ils diffèrent par la taille, la vitesse, le prix et la qualité, mais le principe est le même. Le modèle ne <i>change pas</i> quand tu discutes avec lui : ses connaissances sont figées à sa date d'entraînement.</p>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Les trois phases de vie d'un modèle</h3>
+        <ul class="clean">
+          <li><b>Pré-entraînement.</b> Le modèle lit des milliers de milliards de tokens et apprend à prédire le suivant. Il acquiert langue, faits, raisonnement et code. Coût : des millions d'euros de calcul.</li>
+          <li><b>Post-entraînement.</b> Un affinage supervisé (<i>SFT</i>) sur des exemples de bonnes réponses, puis un apprentissage par renforcement à partir de retours humains ou automatiques (<i>RLHF</i>, <i>RLAIF</i>). C'est ce qui transforme un « prédicteur de texte » en assistant qui suit des consignes et refuse certaines demandes.</li>
+          <li><b>Inférence.</b> L'utilisation, c'est-à-dire ce que tu fais en l'appelant. Les poids du modèle sont figés.</li>
+        </ul>
+        <h3>Apprendre sans réentraîner : l'apprentissage en contexte</h3>
+        <p>Quand tu donnes deux exemples dans ton prompt, le modèle imite le schéma sans qu'aucun poids ne change : c'est l'<i>apprentissage en contexte</i>. Tout le travail d'un agent (consignes, outils, documents) repose sur ce mécanisme : on <b>configure</b> le comportement en écrivant du texte, pas en entraînant.</p>
+        <h3>Les modèles « à raisonnement »</h3>
+        <p>Certains modèles produisent d'abord une longue réflexion intermédiaire (« extended thinking ») avant de répondre. Ils consomment plus de tokens et mettent plus de temps, mais réussissent mieux les problèmes complexes (maths, code, planification). On règle souvent un « budget de réflexion ».</p>
+        <h3>Choisir un modèle</h3>
+        <p>Les fournisseurs proposent des tailles : petits modèles (rapides, peu chers, parfaits pour classer ou extraire), modèles moyens (équilibre), grands modèles (raisonnement difficile, agents longs). Réflexe : prototyper avec un grand modèle, puis tester si un plus petit suffit.</p>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Mécanique interne</h3>
+        <p>Un LLM modélise la probabilité d'une séquence de tokens par factorisation autorégressive : <code>P(x₁…xₙ) = Π P(xₜ | x₁…xₜ₋₁)</code>. À chaque pas, le réseau renvoie un score (<i>logit</i>) pour chaque token du vocabulaire ; un <i>softmax</i> les transforme en probabilités ; on <i>échantillonne</i> un token, on l'ajoute à l'entrée, et on recommence.</p>
+        <pre class="code"><code>tokens → embeddings → [ attention + MLP ] × N couches → logits → softmax → token suivant
+                          ↑ mécanisme d'attention : chaque token « regarde » les précédents</code></pre>
+        <ul class="clean">
+          <li><b>Architecture Transformer.</b> Chaque couche combine une <i>auto-attention</i> (pondère l'importance des tokens précédents pour chaque position) et un perceptron (transformation non linéaire).</li>
+          <li><b>Coût de l'attention.</b> Il croît environ de façon quadratique avec la longueur du contexte. Les implémentations utilisent un <b>cache KV</b> (clés/valeurs déjà calculées) pour ne pas tout recalculer à chaque token généré ; ce cache occupe de la mémoire GPU proportionnelle au contexte.</li>
+          <li><b>Échantillonnage.</b> Température (aplatit ou accentue la distribution), <i>top-p</i> (ne garde que les tokens dont la probabilité cumulée atteint p), <i>top-k</i>. Température proche de 0 = quasi déterministe, sans garantie stricte à cause du calcul parallèle sur GPU.</li>
+          <li><b>Lois d'échelle.</b> La perte diminue de façon régulière quand on augmente données, paramètres et calcul. Les progrès récents viennent aussi du post-entraînement par renforcement sur des tâches vérifiables (code qui passe des tests, problèmes mathématiques), qui rend les modèles bien meilleurs en comportement d'agent.</li>
+        </ul>
+        <div class="callout deep">
+          <b>Conséquence pour l'ingénierie d'agents</b>
+          <p>Le modèle est une fonction sans état : <code>f(contexte) → token suivant</code>. Tout l'« état » d'un agent (objectifs, historique, mémoire) doit donc être <i>reconstruit dans le contexte à chaque appel</i>. Concevoir un agent, c'est concevoir ce qu'on met dans le contexte, quand, et sous quelle forme.</p>
+        </div>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Un LLM prédit la suite la plus probable d'un texte, token après token.</li>
+          <li>Ses connaissances sont figées à l'entraînement ; il ne change pas pendant la conversation.</li>
+          <li>On configure un agent en écrivant du texte (le contexte), pas en réentraînant le modèle.</li>
+          <li>Le modèle est sans état : tout l'état d'un agent est reconstruit dans le contexte à chaque appel.</li>
+        </ul>
+        <p>Suite : <a href="1-bases.html#c3">Chapitre 3 · Tokens et fenêtre de contexte</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c2" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <section class="chap" id="c3" data-title="Tokens et fenêtre de contexte">
+      <div class="chap-head"><span class="chap-num">03</span><h2>Tokens et fenêtre de contexte</h2></div>
+      <p class="goal">Comprendre pourquoi un LLM « oublie », ce que ça coûte, et comment le contexte se remplit.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>Un LLM ne lit pas des lettres ni des mots entiers, mais des <code>tokens</code> : des morceaux de texte, souvent de 2 à 4 caractères. En français, compte environ <b>1 token pour ¾ de mot</b>. Un mot long ou rare est découpé en plusieurs morceaux.</p>
+        <div class="demo" id="demo-tokens">
+          <span class="demo-label">Démo 1 · Découper un texte en tokens</span>
+          <label for="tok-in">Écris ou colle un texte :</label>
+          <textarea id="tok-in">Les agents intelligents automatisent des tâches répétitives.</textarea>
+          <div class="chips" id="tok-out" aria-live="polite"></div>
+          <div class="row"><span class="stat" id="tok-stat"></span></div>
+          <div class="meter" aria-hidden="true"><i id="tok-bar"></i></div>
+          <p class="stat" style="margin-top:6px">La barre montre la part occupée dans une fenêtre d'exemple de 200 tokens (volontairement petite pour la démo). Découpage approximatif à but pédagogique : les vrais modèles utilisent leur propre dictionnaire.</p>
+        </div>
+        <p>La <code>fenêtre de contexte</code> est la quantité maximale de tokens que le modèle peut « avoir sous les yeux » en une fois : ta question, l'historique, les documents fournis <i>et</i> sa réponse.</p>
+        <div class="callout analogy">
+          <b>Analogie : le bureau de travail</b>
+          <p>Le contexte, c'est la surface de ton bureau. Tout ce qui est posé dessus, tu peux le consulter. Quand le bureau est plein, il faut retirer des feuilles pour en poser d'autres : le modèle n'a aucun tiroir secret où se souvenir de ce qui est tombé.</p>
+        </div>
+        <ul class="clean">
+          <li><b>Pas de mémoire entre deux conversations</b> par défaut.</li>
+          <li><b>Coût et vitesse</b> dépendent du nombre de tokens lus et écrits.</li>
+          <li><b>Contexte trop long = qualité en baisse</b> : un modèle noyé sous trop d'informations peut rater un détail.</li>
+        </ul>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Comment le texte est découpé</h3>
+        <p>Les modèles utilisent un <b>tokenizer</b> entraîné pour que les séquences fréquentes soient représentées par un seul token (« bonjour », « tion », « def »). Les mots rares, les noms propres, le code inhabituel et les langues moins représentées dans les données coûtent plus de tokens. Le français coûte typiquement plus de tokens que l'anglais pour le même contenu.</p>
+        <h3>Ce qu'on paie</h3>
+        <div class="scroll-x"><table>
+          <thead><tr><th>Poste</th><th>Détail</th></tr></thead>
+          <tbody>
+            <tr><td>Tokens d'entrée</td><td>Tout ce que tu envoies : consignes, historique, documents, résultats d'outils.</td></tr>
+            <tr><td>Tokens de sortie</td><td>Ce que le modèle écrit (réflexion comprise). Facturé plus cher que l'entrée, car généré un token à la fois.</td></tr>
+            <tr><td>Tokens en cache</td><td>Une partie de l'entrée déjà vue peut être relue à tarif réduit (voir niveau 3).</td></tr>
+          </tbody>
+        </table></div>
+        <h3>Le contexte d'un agent grossit à chaque tour</h3>
+        <p>À chaque tour de boucle, l'historique complet (y compris les gros résultats d'outils) est renvoyé au modèle. Un agent qui lit 30 fichiers peut donc remplir la fenêtre en quelques minutes. D'où l'importance de la <b>gestion du contexte</b> : résumer, élaguer, déléguer à des sous-agents (chapitres <a href="3-memoire-extensions.html#c9">9</a> et <a href="4-multi-securite-prod.html#c12">12</a>).</p>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Tokenisation par BPE</h3>
+        <p>Le <i>Byte-Pair Encoding</i> part des octets (ou caractères), compte les paires adjacentes les plus fréquentes dans un corpus, les fusionne en un nouveau symbole, et répète jusqu'à atteindre la taille de vocabulaire voulue (quelques dizaines à centaines de milliers de tokens). Conséquences pratiques : l'arithmétique sur de longs nombres, l'orthographe lettre à lettre et les anagrammes sont difficiles pour un modèle qui ne voit pas les lettres, mais des morceaux.</p>
+        <h3>Prompt caching</h3>
+        <p>Les fournisseurs peuvent mémoriser le calcul interne (cache KV) d'un <b>préfixe</b> de prompt identique d'un appel à l'autre. Une lecture depuis le cache coûte une fraction du prix normal (de l'ordre de 10 %) et réduit la latence ; l'écriture initiale coûte un peu plus, et le cache expire après quelques minutes sans usage. Règle de conception : <b>placer le contenu stable en tête</b> (consignes système, définitions d'outils, documents de référence) et le contenu variable à la fin. Modifier un seul caractère au début invalide tout le cache derrière lui.</p>
+        <h3>Qualité en contexte long</h3>
+        <ul class="clean">
+          <li>La capacité à retrouver une information dans un contexte long n'est pas uniforme : l'information située au milieu est souvent moins bien exploitée (<i>lost in the middle</i>).</li>
+          <li>Plus le contexte est rempli de contenu peu pertinent, plus la précision baisse : on parle de <i>context rot</i>. Mieux vaut un contexte court et dense qu'un contexte plein.</li>
+          <li>Pour les questions sur un long document, placer le document <b>avant</b> la question tend à améliorer les résultats.</li>
+        </ul>
+        <div class="callout deep">
+          <b>Budget de contexte, le réflexe d'un ingénieur d'agents</b>
+          <p>Raisonne en budget : prompt système et outils (fixe) + historique (croît) + résultats d'outils (volatils) + marge pour la réponse. Mesure-le (l'API renvoie <code>usage.input_tokens</code> et <code>usage.output_tokens</code>), fixe des plafonds sur les sorties d'outils, et déclenche un résumé avant d'atteindre la limite.</p>
+        </div>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Le modèle lit des tokens (environ ¾ de mot) ; la fenêtre de contexte est tout ce qu'il a sous les yeux, réponse comprise.</li>
+          <li>Pas de mémoire entre deux conversations par défaut.</li>
+          <li>Le contexte d'un agent grossit à chaque tour : coût et qualité en dépendent.</li>
+          <li>Mets le contenu stable en tête de prompt : le cache réduit coût et latence.</li>
+        </ul>
+        <p>Suite : <a href="1-bases.html#c4">Chapitre 4 · Parler au modèle : le prompt</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c3" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <section class="chap" id="c4" data-title="Parler au modèle : le prompt">
+      <div class="chap-head"><span class="chap-num">04</span><h2>Parler au modèle : le prompt</h2></div>
+      <p class="goal">Rédiger une consigne efficace et comprendre la structure d'un appel au modèle.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>Le <code>prompt</code> est tout le texte envoyé au modèle. Sa qualité détermine largement celle de la réponse. Une conversation est composée de messages avec trois rôles :</p>
+        <div class="chat" aria-label="Exemple de conversation avec trois rôles">
+          <div class="msg sys"><small>Prompt système</small>Tu es un assistant RH. Tu réponds en français, de façon concise, et tu ne donnes jamais de données personnelles.</div>
+          <div class="msg user"><small>Utilisateur</small>Combien de jours de congés reste-t-il à une personne arrivée en mars ?</div>
+          <div class="msg ai"><small>Assistant (le modèle)</small>Cela dépend de la convention applicable. En règle générale, on compte 2,5 jours ouvrables par mois travaillé…</div>
+        </div>
+        <ul class="clean">
+          <li>Le <b>prompt système</b> fixe le rôle, le ton et les règles.</li>
+          <li>Le message <b>utilisateur</b> contient la demande.</li>
+          <li>Le message <b>assistant</b> est la réponse. À chaque tour, tout l'historique est renvoyé : c'est ainsi que le modèle « se souvient » dans une conversation.</li>
+        </ul>
+        <div class="callout key">
+          <b>Règle d'or</b>
+          <p>Demande-toi : « Un collègue brillant qui arrive aujourd'hui, sans rien savoir, pourrait-il faire ce travail avec seulement ce message ? » Si non, ajoute le contexte qui manque.</p>
+        </div>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Les ingrédients d'un bon prompt</h3>
+        <div class="scroll-x"><table>
+          <thead><tr><th>Ingrédient</th><th>Pourquoi</th><th>Exemple</th></tr></thead>
+          <tbody>
+            <tr><td>Contexte</td><td>Le modèle ne connaît ni ton métier ni ton entreprise.</td><td>« Nous sommes une équipe support de 8 personnes… »</td></tr>
+            <tr><td>Tâche précise</td><td>Une demande vague donne une réponse vague.</td><td>« Résume ce ticket en 3 puces. »</td></tr>
+            <tr><td>Format attendu</td><td>Facilite la relecture et la réutilisation.</td><td>« Réponds sous forme de tableau à 2 colonnes. »</td></tr>
+            <tr><td>Exemples</td><td>Montrer vaut mieux que décrire.</td><td>« Voici deux résumés que j'aime : … »</td></tr>
+            <tr><td>Contraintes</td><td>Évite les débordements.</td><td>« N'invente rien. Si tu ne sais pas, dis-le. »</td></tr>
+          </tbody>
+        </table></div>
+        <h3>Techniques éprouvées</h3>
+        <ul class="clean">
+          <li><b>Few-shot :</b> fournir 2 à 5 exemples entrée/sortie. Très efficace pour imposer un format ou un style.</li>
+          <li><b>Raisonner étape par étape :</b> demander de réfléchir avant de conclure améliore les problèmes à plusieurs étapes.</li>
+          <li><b>Balises de structure :</b> séparer les parties avec des balises (<code>&lt;document&gt;…&lt;/document&gt;</code>, <code>&lt;consignes&gt;</code>) évite que le modèle confonde consignes et données.</li>
+          <li><b>Expliquer le pourquoi :</b> « n'utilise pas de listes car le résultat sera lu à voix haute » fonctionne mieux qu'une interdiction sèche.</li>
+          <li><b>Autoriser l'incertitude :</b> « si l'information n'est pas dans le document, réponds qu'elle est absente ».</li>
+        </ul>
+        <p><b>Température :</b> basse pour des tâches factuelles et reproductibles, plus haute pour la créativité. Selon les modèles, certains réglages sont gérés par le fournisseur : consulte la documentation du modèle utilisé.</p>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Anatomie d'un appel d'API</h3>
+        <p>Un « prompt » en production, c'est un appel HTTP structuré. Exemple avec le SDK Python d'Anthropic :</p>
+        <span class="fname">appel_modele.py</span>
+<pre class="code"><code>import anthropic
+
+client = anthropic.Anthropic()          # lit la variable ANTHROPIC_API_KEY
+
+msg = client.messages.create(
+    model="claude-sonnet-5-5",
+    max_tokens=1024,                     # plafond de tokens générés
+    system="Tu es un assistant RH. Réponds en français, de façon concise.",
+    messages=[
+        {"role": "user", "content": "Résume ce ticket en 3 puces : ..."},
+    ],
+)
+print(msg.content[0].text)
+print(msg.usage.input_tokens, msg.usage.output_tokens)   # mesurer le coût</code></pre>
+        <h3>Le prompt est un logiciel : il se teste</h3>
+        <ul class="clean">
+          <li><b>Jeu d'évaluation.</b> Constitue 20 à 100 cas représentatifs (dont des cas pièges) avec le résultat attendu. Toute modification de prompt se juge sur ce jeu, pas sur trois essais à la main.</li>
+          <li><b>Sorties structurées.</b> Quand un programme consomme la réponse, impose un schéma JSON (fonctionnalité de sortie structurée ou appel d'outil dont les paramètres sont le schéma) et valide-le côté code. Ne parse jamais du texte libre en production.</li>
+          <li><b>Séparation instructions/données.</b> Tout contenu externe est placé dans des balises dédiées et déclaré comme données : première défense, imparfaite, contre l'injection de prompt (chapitre <a href="4-multi-securite-prod.html#c13">13</a>).</li>
+          <li><b>Déterminisme.</b> Même à température minimale, deux appels peuvent différer légèrement. Conçois les tests avec des critères (« contient la décision X ») plutôt qu'avec une égalité de chaînes.</li>
+          <li><b>Versionnage.</b> Les prompts sont du code : dans Git, relus, liés à des évaluations, déployés progressivement. Un changement de modèle impose de relancer les évaluations.</li>
+        </ul>
+        <div class="callout deep">
+          <b>Du prompt au « context engineering »</b>
+          <p>Pour un agent, le prompt initial ne représente qu'une petite part de ce que le modèle voit. L'enjeu devient l'<i>ingénierie du contexte</i> : choisir à chaque tour quels documents, quels résultats d'outils et quels souvenirs entrent dans la fenêtre. C'est le sujet des chapitres <a href="3-memoire-extensions.html#c9">9</a>, <a href="3-memoire-extensions.html#c11">11</a> et <a href="5-cc-prise-en-main.html#c16">16</a>.</p>
+        </div>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Une conversation = prompt système, messages utilisateur, messages assistant. L'historique entier est renvoyé à chaque tour.</li>
+          <li>Un bon prompt donne le contexte, la tâche précise, le format, des exemples, des contraintes.</li>
+          <li>Règle d'or : un collègue brillant, sans contexte, pourrait-il faire le travail avec ce seul message ?</li>
+          <li>Un prompt de production se teste sur un jeu d'évaluation, comme du code.</li>
+        </ul>
+        <p>Suite : <a href="1-bases.html#c5">Chapitre 5 · Les limites d'un LLM seul</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c4" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <section class="chap" id="c5" data-title="Les limites d&#x27;un LLM seul">
+      <div class="chap-head"><span class="chap-num">05</span><h2>Les limites d'un LLM seul</h2></div>
+      <p class="goal">Comprendre pourquoi un modèle seul ne suffit pas, et comment limiter les erreurs.</p>
+
+      <div class="lvl" data-lvl="1">
+        <div class="cols">
+          <div class="card"><h4>Il invente parfois</h4><p>On appelle ça une <code>hallucination</code> : une réponse fausse mais formulée avec aplomb (fausse citation, fonction qui n'existe pas).</p></div>
+          <div class="card"><h4>Il est coupé du monde</h4><p>Il ne connaît ni l'heure, ni la météo, ni tes fichiers, ni ta base de données.</p></div>
+          <div class="card"><h4>Il ne fait rien</h4><p>Il produit du texte. Il ne peut pas envoyer un email ni modifier un fichier.</p></div>
+          <div class="card"><h4>Il n'est pas déterministe</h4><p>La même question peut donner des réponses différentes.</p></div>
+        </div>
+        <div class="callout warn">
+          <b>Et ensuite ?</b>
+          <p>Un LLM est excellent pour <i>comprendre et décider</i> en langage naturel. Pour <i>savoir</i> (données à jour) et <i>agir</i>, il lui faut des outils : chapitre suivant.</p>
+        </div>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>D'où viennent les hallucinations ?</h3>
+        <p>Le modèle est entraîné à produire un texte <i>plausible</i>, pas à vérifier un fait. Quand il ne sait pas, rien dans sa mécanique ne l'oblige à s'arrêter : il complète. Les risques augmentent pour les sujets rares, les chiffres précis, les références (articles, URL, noms de fonctions) et les questions dont la prémisse est fausse.</p>
+        <h3>Réduire le risque</h3>
+        <ul class="clean">
+          <li><b>Ancrer</b> la réponse dans des sources fournies (RAG, fichiers, résultats d'outils) et exiger des citations.</li>
+          <li><b>Donner une porte de sortie</b> : « si tu n'es pas sûr, dis-le ».</li>
+          <li><b>Vérifier par un outil</b> : calcul avec un interpréteur, test unitaire, recherche réelle.</li>
+          <li><b>Faire relire</b> par un second passage ou un second modèle, avec des consignes de critique.</li>
+        </ul>
+        <h3>Autres limites à connaître</h3>
+        <ul class="clean">
+          <li><b>Complaisance (sycophancy) :</b> tendance à aller dans le sens de l'utilisateur. Demande explicitement une critique.</li>
+          <li><b>Sensibilité à la formulation :</b> deux phrases équivalentes peuvent donner des résultats différents.</li>
+          <li><b>Date de coupure :</b> pas de connaissance des événements postérieurs à l'entraînement, sauf recherche web.</li>
+        </ul>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Penser en fiabilité système, pas en fiabilité modèle</h3>
+        <ul class="clean">
+          <li><b>Frontière irrégulière :</b> un modèle peut résoudre un problème difficile et échouer sur un plus simple. Les benchmarks publics ne prédisent pas ta tâche : mesure sur tes propres cas.</li>
+          <li><b>Métriques utiles :</b> taux de réussite par tâche, <i>pass@k</i> (au moins un succès sur k essais), cohérence entre essais, taux de refus à tort, coût et latence par tâche réussie.</li>
+          <li><b>Vérificateurs externes :</b> la technique la plus robuste est d'ajouter un <i>vérificateur déterministe</i> (tests, validation de schéma, règles métier) et de laisser le modèle itérer jusqu'à ce qu'il passe. La fiabilité vient de la boucle, pas du modèle seul.</li>
+          <li><b>Calibration :</b> la confiance affichée par le modèle ne reflète pas toujours sa probabilité d'avoir raison. Ne t'en sers pas comme seul filtre.</li>
+          <li><b>Erreurs en cascade :</b> dans un agent, une hallucination dans un résultat intermédiaire est ensuite traitée comme un fait. Enregistre et affiche les sources de chaque affirmation clé.</li>
+        </ul>
+        <div class="callout deep">
+          <b>Stratégie de défense en profondeur</b>
+          <p>Empile des protections indépendantes : consignes claires → ancrage dans des sources → vérification automatique → relecture par un second agent → validation humaine pour les décisions à enjeu. Chaque couche attrape une partie des erreurs que la précédente laisse passer.</p>
+        </div>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Un LLM invente parfois (hallucination), ne connaît pas tes données et n'agit pas seul.</li>
+          <li>Réduire le risque : ancrer dans des sources, autoriser « je ne sais pas », vérifier par un outil, faire relire.</li>
+          <li>La fiabilité vient de la boucle de vérification, pas du modèle seul.</li>
+        </ul>
+        <p>Suite : <a href="2-outils-agents.html#c6">Chapitre 6 · Les outils (tool use)</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c5" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <div class="miniquiz" data-quiz="bases"></div>
+
+    <div class="pager" id="pager"></div>
+
+    <footer>
+      <p>Support de formation interne. Les noms de produits cités le sont à titre d'exemple. Claude Code et l'écosystème évoluent vite : noms de commandes, options, chemins de configuration et fonctionnalités peuvent changer. Vérifie toujours la documentation officielle à jour avant de t'appuyer sur un détail, et consulte la politique IA de ton entreprise.</p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

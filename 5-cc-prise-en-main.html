@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Claude Code : prise en main · Comprendre les agents IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="cc-prise-en-main">
+<div class="shell">
+  <nav class="toc" id="toc" aria-label="Sommaire"></nav>
+
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Partie 2 · Claude Code · Page 5</p>
+      <h1>Claude Code : prise en main</h1>
+      <p class="lead">Lancer Claude Code, lui donner la mémoire du projet et contrôler ce qu&#x27;il a le droit de faire.</p>
+      <div class="page-meta" id="page-meta"></div>
+    </header>
+
+    <section class="chap" id="c15" data-title="Claude Code : prise en main">
+
+      <div class="chap-head"><span class="chap-num">15</span><h2>Claude Code : prise en main</h2></div>
+      <p class="goal">Comprendre ce qu'est Claude Code, comment il fonctionne et le lancer pour la première fois.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p><code>Claude Code</code> est l'agent de programmation d'Anthropic. Tu le lances dans un dossier de projet, tu lui décris une tâche en langage naturel (« corrige le test qui échoue », « ajoute un filtre par date à cette page »), et il lit ton code, modifie les fichiers, exécute des commandes et vérifie le résultat. C'est exactement la boucle des chapitres <a href="2-outils-agents.html#c6">6</a> et <a href="2-outils-agents.html#c7">7</a>, avec des outils taillés pour le développement.</p>
+        <div class="callout analogy">
+          <b>Une image pour retenir</b>
+          <p>C'est un collègue développeur assis dans ton terminal : il explore le projet, propose une modification, te demande l'autorisation avant les actions sensibles, et lance les tests pour vérifier son travail.</p>
+        </div>
+        <h3>Où l'utiliser</h3>
+        <ul class="clean">
+          <li><b>Dans un terminal</b> (usage de référence), dans le dossier de ton projet.</li>
+          <li><b>Dans un éditeur</b> via les extensions (VS Code, JetBrains).</li>
+          <li><b>Application de bureau et web</b>, selon les offres.</li>
+        </ul>
+        <h3>Premier lancement</h3>
+<pre class="code"><code>cd mon-projet
+claude                      # démarre une session interactive
+&gt; Explique-moi l'architecture de ce projet</code></pre>
+        <p>À la première utilisation, il te propose de te connecter (compte Claude ou clé d'API d'organisation). L'installation exacte évolue : suis la documentation officielle de Claude Code.</p>
+        <div class="demo" id="demo-cc">
+          <span class="demo-label">Démo 3 · Une session Claude Code, pas à pas</span>
+          <p style="margin-top:0"><b>Demande :</b> « Le test <code>test_total</code> échoue, corrige-le. »</p>
+          <ol class="steps" id="cc-steps" aria-live="polite"></ol>
+          <div class="row">
+            <button class="btn" type="button" id="cc-next">Étape suivante</button>
+            <button class="btn ghost" type="button" id="cc-reset">Recommencer</button>
+            <span class="stat" id="cc-count"></span>
+          </div>
+        </div>
+        <p>Remarque la demande d'approbation avant la modification du fichier, et la <b>vérification par les tests</b> avant de conclure.</p>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Les outils intégrés</h3>
+        <div class="scroll-x"><table>
+          <thead><tr><th>Famille</th><th>Outils</th><th>Rôle</th></tr></thead>
+          <tbody>
+            <tr><td>Lecture / recherche</td><td><code>Read</code>, <code>Glob</code>, <code>Grep</code></td><td>Lire un fichier, trouver des fichiers par motif, chercher dans le code (« recherche agentique »). Sur macOS, Linux et WSL, <code>Glob</code> et <code>Grep</code> sont absents par défaut : Claude cherche alors avec <code>find</code> et <code>grep</code> via <code>Bash</code>.</td></tr>
+            <tr><td>Modification</td><td><code>Edit</code>, <code>Write</code></td><td>Modifier un fichier (remplacement ciblé) ou en créer un.</td></tr>
+            <tr><td>Exécution</td><td><code>Bash</code></td><td>Lancer des commandes : tests, build, git, scripts.</td></tr>
+            <tr><td>Web</td><td><code>WebFetch</code>, <code>WebSearch</code></td><td>Lire une page, chercher sur le web (selon configuration).</td></tr>
+            <tr><td>Délégation</td><td>sous-agents (<code>Agent</code>, ancien nom <code>Task</code>)</td><td>Confier une sous-tâche à un agent au contexte séparé.</td></tr>
+            <tr><td>Suivi</td><td>liste de tâches (<code>TaskCreate</code>, <code>TaskUpdate</code>, <code>TaskList</code>)</td><td>Planifier et suivre l'avancement, selon le modèle. Remplacent <code>TodoWrite</code>, désactivé par défaut.</td></tr>
+          </tbody>
+        </table></div>
+        <h3>Ce que Claude Code charge dans son contexte</h3>
+        <ul class="clean">
+          <li>Son prompt système et les définitions de ses outils.</li>
+          <li>Tes fichiers d'instructions <code>CLAUDE.md</code> (chapitre <a href="5-cc-prise-en-main.html#c16">16</a>).</li>
+          <li>Les fichiers qu'il lit, les sorties de commandes, l'historique de la session.</li>
+        </ul>
+        <p>Il n'indexe pas ton dépôt à l'avance : il <b>cherche à la demande</b> avec <code>Read</code> et des recherches par motif (<code>Glob</code>, <code>Grep</code>, ou <code>find</code> et <code>grep</code> selon la plateforme), comme le ferait un développeur qui découvre le projet.</p>
+        <h3>Gestes de base</h3>
+        <ul class="clean">
+          <li>Écrire <code>@chemin/fichier</code> pour désigner un fichier précis.</li>
+          <li>Préfixer par <code>!</code> pour lancer directement une commande shell.</li>
+          <li><code>Échap</code> pour interrompre ; <code>/clear</code> pour repartir d'un contexte vide ; <code>/resume</code> pour reprendre une session.</li>
+          <li><code>/model</code> pour changer de modèle ; <code>/usage</code> pour voir la consommation (alias : <code>/cost</code>).</li>
+        </ul>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Architecture : la boucle du chapitre <a href="2-outils-agents.html#c7">7</a>, en production</h3>
+        <pre class="code"><code>┌────────────────────── session Claude Code ───────────────────────┐
+│ contexte = prompt système + outils + CLAUDE.md + historique       │
+│                                                                   │
+│  modèle ──demande d'outil──▶ moteur de permissions ──▶ exécution  │
+│     ▲                         (règles, mode, hooks)     (Read/Edit/Bash/MCP)
+│     └──────────── résultat (tronqué si trop long) ◀───────────────┘
+└───────────────────────────────────────────────────────────────────┘</code></pre>
+        <ul class="clean">
+          <li><b>Le moteur de permissions</b> se place entre le modèle et l'exécution : chaque appel d'outil passe par les règles <i>allow/ask/deny</i>, le mode courant et d'éventuels hooks (chapitres <a href="5-cc-prise-en-main.html#c17">17</a> et <a href="6-cc-extensions.html#c19">19</a>).</li>
+          <li><b>Gestion automatique du contexte :</b> quand la fenêtre approche de sa limite, la conversation est compactée. Tu peux aussi déclencher <code>/compact</code> avec des instructions sur ce qu'il faut conserver.</li>
+          <li><b>Prompt caching :</b> le préfixe stable (système, outils, CLAUDE.md) est mis en cache, ce qui réduit coût et latence des tours successifs. Modifier CLAUDE.md ou la liste des outils en cours de session peut invalider ce cache.</li>
+          <li><b>Authentification et déploiement :</b> compte Claude (abonnement), clé d'API Anthropic, ou fournisseurs cloud (Amazon Bedrock, Google Cloud, Microsoft Foundry) pour les entreprises qui imposent leur cloud.</li>
+          <li><b>Extensibilité :</b> la même boucle se pilote par code (mode non interactif, SDK, chapitre <a href="7-cc-automatiser.html#c21">21</a>), s'étend par MCP (chapitre <a href="6-cc-extensions.html#c20">20</a>), skills et sous-agents (chapitre <a href="6-cc-extensions.html#c18">18</a>), hooks (chapitre <a href="6-cc-extensions.html#c19">19</a>).</li>
+          <li><b>Télémétrie d'équipe :</b> des métriques d'usage et de coût peuvent être exportées (par exemple au format OpenTelemetry) pour piloter l'adoption et le budget.</li>
+        </ul>
+        <div class="callout deep">
+          <b>Pourquoi ça marche bien pour le code</b>
+          <p>Le code a un <i>vérificateur objectif</i> : le compilateur, le linter, les tests. L'agent peut donc agir, mesurer, corriger, sans qu'un humain valide chaque pas. C'est la leçon du chapitre <a href="1-bases.html#c5">5</a> : la fiabilité vient de la boucle de vérification. Plus tu fournis de vérifications automatiques à ton projet, meilleur devient Claude Code.</p>
+        </div>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Claude Code est un agent de programmation : la boucle des chapitres 6 et 7, avec des outils pour le code.</li>
+          <li>Il cherche à la demande au lieu d'indexer ton dépôt.</li>
+          <li>Chaque appel d'outil passe par le moteur de permissions.</li>
+          <li>Il réussit bien sur du code parce que tests et compilateur vérifient son travail.</li>
+        </ul>
+        <p>Suite : <a href="5-cc-prise-en-main.html#c16">Chapitre 16 · CLAUDE.md : la mémoire du projet</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c15" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <section class="chap" id="c16" data-title="CLAUDE.md : la mémoire du projet">
+      <div class="chap-head"><span class="chap-num">16</span><h2>CLAUDE.md : la mémoire du projet</h2></div>
+      <p class="goal">Donner à Claude Code les connaissances du projet qu'il ne peut pas deviner.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>Claude Code démarre chaque session avec un contexte vide, sans souvenir de la précédente (hors les notes qu'il peut prendre seul : voir niveau 2). <code>CLAUDE.md</code> est un fichier texte, à la racine du projet, que Claude lit <b>au début de chaque session</b>. Tu y écris ce qu'un nouveau développeur devrait savoir : comment lancer les tests, les conventions de code, les pièges du projet.</p>
+        <div class="callout analogy">
+          <b>Analogie : le dossier d'accueil du nouvel arrivant</b>
+          <p>Le jour de son arrivée, une personne reçoit les accès, la façon de lancer le projet et les règles de l'équipe. CLAUDE.md joue ce rôle pour l'agent, à chaque session.</p>
+        </div>
+        <p>La commande <code>/init</code> analyse le projet et génère un premier CLAUDE.md que tu corriges ensuite. Commit-le dans Git : toute l'équipe en profite.</p>
+        <span class="fname">CLAUDE.md</span>
+<pre class="code"><code># Projet Facturation
+
+## Commandes
+- Tests : `npm run test` (un fichier : `npm run test -- src/panier.test.ts`)
+- Lint : `npm run lint` (à lancer avant chaque commit)
+
+## Conventions
+- TypeScript strict, pas de `any`.
+- Les montants sont des entiers en centimes, jamais des flottants.
+
+## À savoir
+- Le dossier `legacy/` est gelé : ne pas le modifier.</code></pre>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Où placer les fichiers ?</h3>
+        <div class="scroll-x"><table>
+          <thead><tr><th>Emplacement</th><th>Portée</th><th>Partagé ?</th></tr></thead>
+          <tbody>
+            <tr><td><code>~/.claude/CLAUDE.md</code></td><td>Toi, tous tes projets</td><td>Non (préférences personnelles)</td></tr>
+            <tr><td><code>./CLAUDE.md</code> ou <code>./.claude/CLAUDE.md</code></td><td>Tout le projet</td><td>Oui, versionné dans Git</td></tr>
+            <tr><td><code>./CLAUDE.local.md</code></td><td>Toi, ce projet</td><td>Non : à mettre dans <code>.gitignore</code></td></tr>
+            <tr><td><code>sous-dossier/CLAUDE.md</code></td><td>Ce dossier, chargé quand Claude y travaille</td><td>Oui</td></tr>
+            <tr><td>Politique d'entreprise (gérée)</td><td>Toute l'organisation</td><td>Imposée par l'IT</td></tr>
+          </tbody>
+        </table></div>
+        <h3>Fonctions pratiques</h3>
+        <ul class="clean">
+          <li><b>Imports :</b> un CLAUDE.md peut référencer d'autres fichiers (<code>@docs/architecture.md</code>) pour rester court tout en donnant accès au détail.</li>
+          <li><code>/memory</code> ouvre les fichiers de mémoire pour les éditer, et permet d'activer ou non la mémoire automatique.</li>
+          <li><b>Mémoire automatique :</b> Claude peut aussi noter seul ce qu'il apprend de tes corrections. Elle complète CLAUDE.md, elle ne le remplace pas.</li>
+          <li><b>Règles ciblées :</b> des fichiers Markdown dans <code>.claude/rules/</code> découpent les instructions par sujet ou par type de fichier.</li>
+          <li>Quand Claude commet deux fois la même erreur, ajoute la règle correspondante : c'est la méthode la plus simple pour l'améliorer dans la durée.</li>
+        </ul>
+        <h3>Que mettre, que ne pas mettre ?</h3>
+        <div class="cols">
+          <div class="card"><span class="tag">À mettre</span><ul><li>Commandes de build, test, lint</li><li>Conventions non évidentes</li><li>Architecture en quelques lignes</li><li>Pièges connus, dossiers interdits</li></ul></div>
+          <div class="card"><span class="tag">À éviter</span><ul><li>Ce que le code montre déjà</li><li>Règles de style gérées par un linter</li><li>Longs documents recopiés</li><li>Informations qui changent souvent</li></ul></div>
+        </div>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>CLAUDE.md est du contexte, pas du code</h3>
+        <ul class="clean">
+          <li><b>Il coûte des tokens à chaque session</b>, et chaque ligne concurrence l'attention du modèle. Un CLAUDE.md de 500 lignes est moins bien suivi qu'un de 60 ; la documentation vise moins de 200 lignes par fichier. Élague régulièrement.</li>
+          <li><b>Aucune garantie d'application.</b> C'est une consigne que le modèle suit « le plus souvent ». Pour une règle qui doit être respectée <i>sans exception</i> (formater après chaque édition, interdire une commande), utilise un <b>hook</b> (chapitre <a href="6-cc-extensions.html#c19">19</a>) ou une règle de permission (chapitre <a href="5-cc-prise-en-main.html#c17">17</a>).</li>
+          <li><b>Formulation :</b> des consignes concrètes et testables (« exécute <code>npm run lint</code> avant de conclure ») fonctionnent mieux que des principes vagues (« écris du code propre »).</li>
+          <li><b>Emphase :</b> si une règle critique est ignorée, reformule-la et place-la plus haut plutôt que d'empiler des majuscules.</li>
+          <li><b>Chargement hiérarchique :</b> les fichiers des sous-dossiers ne sont lus que lorsque Claude touche à ces dossiers. Utilise-les pour les règles propres à un module, afin de ne pas alourdir le contexte global.</li>
+          <li><b>Hygiène d'équipe :</b> relis les changements de CLAUDE.md en revue de code, comme n'importe quelle source de vérité. Une consigne erronée est exécutée à chaque session.</li>
+        </ul>
+        <div class="callout deep">
+          <b>Boucle d'amélioration</b>
+          <p>Observe les sessions → repère les erreurs répétées → formule la règle manquante en une ligne → vérifie que la session suivante la respecte → sinon, passe à un hook. Ton CLAUDE.md devient la mémoire institutionnelle de l'équipe.</p>
+        </div>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>CLAUDE.md est lu au début de chaque session : commandes, conventions, pièges du projet.</li>
+          <li><code>/init</code> en génère un premier ; versionne-le dans Git.</li>
+          <li>Court et concret : c'est une consigne, sans garantie d'application.</li>
+          <li>Une règle qui ne doit jamais être violée appartient à un hook ou à une permission.</li>
+        </ul>
+        <p>Suite : <a href="5-cc-prise-en-main.html#c17">Chapitre 17 · Permissions, modes et retour arrière</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c16" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <section class="chap" id="c17" data-title="Permissions, modes et retour arrière">
+      <div class="chap-head"><span class="chap-num">17</span><h2>Permissions, modes et retour arrière</h2></div>
+      <p class="goal">Contrôler ce que Claude Code a le droit de faire, et pouvoir annuler.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>Par défaut, Claude Code <b>demande ton accord</b> avant de modifier un fichier ou d'exécuter une commande. Il peut lire librement, mais il ne change rien sans validation. Tu choisis, pour chaque demande, d'accepter, de refuser, ou d'autoriser ce type d'action pour la suite.</p>
+        <h3>Les modes</h3>
+        <div class="cols">
+          <div class="card"><span class="tag">Par défaut</span><h4>Demande avant d'agir</h4><p>Le plus prudent pour débuter.</p></div>
+          <div class="card"><span class="tag">Acceptation des éditions</span><h4>Modifie sans demander</h4><p>Les éditions de fichiers passent seules. Les commandes sensibles restent soumises à validation.</p></div>
+          <div class="card"><span class="tag">Plan</span><h4>Réfléchit, ne touche à rien</h4><p>Explore le code et propose un plan que tu valides avant toute modification.</p></div>
+        </div>
+        <p>On change de mode en cours de session avec le raccourci <code>Maj+Tab</code>, ou on démarre dans un mode avec <code>--permission-mode</code>. Deux autres modes existent : <b>auto</b> (un classificateur examine les actions à ta place) et <b>dontAsk</b> (refuse tout ce qui demanderait une validation). Il existe aussi un mode qui contourne toutes les permissions : à réserver à des environnements jetables et isolés (voir niveau 3).</p>
+        <div class="callout key">
+          <b>Bon réflexe</b>
+          <p>Pour une tâche non triviale, commence en <b>mode plan</b> : lis le plan, corrige-le, puis seulement après laisse Claude modifier le code. Corriger un plan coûte bien moins cher que corriger vingt fichiers modifiés.</p>
+        </div>
+        <p><b>Retour arrière :</b> Claude Code garde des points de contrôle des fichiers qu'il modifie avec ses outils d'édition. En cas de dérive, <code>Échap</code> deux fois (champ de saisie vide) ou <code>/rewind</code> permet de revenir à un état précédent de la session. Les fichiers changés par des commandes <code>Bash</code> ne sont pas suivis : Git reste ton filet de sécurité.</p>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Règles d'autorisation</h3>
+        <p>Pour ne pas valider cent fois la même commande sûre, tu déclares des règles dans un fichier de configuration. Trois listes : <code>allow</code> (autorisé sans demander), <code>ask</code> (toujours demander), <code>deny</code> (interdit).</p>
+        <span class="fname">.claude/settings.json</span>
+<pre class="code"><code>{
+  "permissions": {
+    "allow": ["Bash(npm run test *)", "Bash(git diff *)", "Bash(git status)"],
+    "ask":   ["Bash(git push *)"],
+    "deny":  ["Read(./.env)", "Read(./secrets/**)", "Bash(curl *)"]
+  }
+}</code></pre>
+        <p>La commande <code>/permissions</code> permet de consulter et modifier ces règles de façon interactive.</p>
+        <h3>Où vivent les réglages ? (du plus fort au plus faible)</h3>
+        <ol class="clean">
+          <li><b>Politique d'entreprise (gérée)</b> : imposée, non modifiable par l'utilisateur.</li>
+          <li><b>Option <code>--settings</code></b> de la ligne de commande, pour la session.</li>
+          <li><b><code>.claude/settings.local.json</code></b> : réglages personnels du projet, non versionnés.</li>
+          <li><b><code>.claude/settings.json</code></b> : réglages d'équipe du projet, versionnés.</li>
+          <li><b><code>~/.claude/settings.json</code></b> : réglages personnels globaux.</li>
+        </ol>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Sémantique des règles</h3>
+        <ul class="clean">
+          <li><b>Priorité :</b> une règle <code>deny</code> l'emporte sur <code>ask</code>, qui l'emporte sur <code>allow</code>. Mets les interdictions de sécurité en <code>deny</code> au bon niveau (projet ou politique d'entreprise).</li>
+          <li><b>Motifs :</b> <code>Bash(npm run test *)</code> autorise les commandes commençant par ce préfixe (l'écriture <code>:*</code> en fin de motif est équivalente) ; <code>Read(./secrets/**)</code> cible des chemins. Les règles sur <code>Bash</code> reposent sur des préfixes : elles ne remplacent pas un vrai cloisonnement. Une commande composée (enchaînée par des opérateurs) mérite une vigilance particulière.</li>
+          <li><b>Granularité par outil :</b> les outils MCP s'adressent par nom (<code>mcp__serveur__outil</code>), ce qui permet d'autoriser la lecture d'un serveur et d'interdire son écriture.</li>
+        </ul>
+        <h3>Sandbox : isoler pour de bon</h3>
+        <p>Les permissions décident <i>si on demande</i>. Le <b>bac à sable</b> décide <i>ce qui est techniquement possible</i> : Claude Code peut exécuter ses commandes dans un environnement restreint au niveau du système d'exploitation, avec accès limité au système de fichiers (le projet seulement) et au réseau (domaines autorisés). Même une injection de prompt réussie reste alors cantonnée.</p>
+        <h3>Le mode « contourner les permissions »</h3>
+        <p>L'option <code>--dangerously-skip-permissions</code> supprime toutes les validations. Son nom est volontairement dissuasif. Usage raisonnable : uniquement dans un conteneur ou une machine virtuelle <b>jetable</b>, sans accès à des secrets ni à un réseau ouvert, pour des tâches automatisées bornées. Jamais sur ton poste avec tes identifiants.</p>
+        <h3>Autres points de vigilance</h3>
+        <ul class="clean">
+          <li><b>Fatigue d'approbation :</b> si tu valides tout par réflexe, la protection disparaît (chapitre <a href="4-multi-securite-prod.html#c13">13</a>). Autorise à l'avance les actions sûres et fréquentes.</li>
+          <li><b>Ne fais confiance à un dépôt inconnu qu'après l'avoir examiné :</b> un projet cloné peut contenir ses propres réglages, hooks et configuration MCP.</li>
+          <li><b>Secrets :</b> interdis la lecture des fichiers <code>.env</code> et des dossiers de clés via <code>deny</code>.</li>
+        </ul>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Par défaut, Claude Code demande avant de modifier un fichier ou d'exécuter une commande.</li>
+          <li>Pour une tâche non triviale, commence en mode plan (<code>Maj+Tab</code>).</li>
+          <li>Règles allow, ask, deny dans les réglages ; deny l'emporte toujours.</li>
+          <li>Les permissions décident si on demande ; le bac à sable décide ce qui est techniquement possible.</li>
+        </ul>
+        <p>Suite : <a href="6-cc-extensions.html#c18">Chapitre 18 · Commandes, skills, sous-agents, plugins</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c17" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <div class="miniquiz" data-quiz="cc-prise-en-main"></div>
+
+    <div class="pager" id="pager"></div>
+
+    <footer>
+      <p>Support de formation interne. Les noms de produits cités le sont à titre d'exemple. Claude Code et l'écosystème évoluent vite : noms de commandes, options, chemins de configuration et fonctionnalités peuvent changer. Vérifie toujours la documentation officielle à jour avant de t'appuyer sur un détail, et consulte la politique IA de ton entreprise.</p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

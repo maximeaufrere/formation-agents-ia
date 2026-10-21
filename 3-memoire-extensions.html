@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mémoire et extensions · Comprendre les agents IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="memoire-extensions">
+<div class="shell">
+  <nav class="toc" id="toc" aria-label="Sommaire"></nav>
+
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Partie 1 · Fondamentaux · Page 3</p>
+      <h1>Mémoire et extensions</h1>
+      <p class="lead">Comment un agent se souvient, accède à des documents, et s&#x27;étend avec MCP et les skills.</p>
+      <div class="page-meta" id="page-meta"></div>
+    </header>
+
+    <section class="chap" id="c9" data-title="Mémoire, contexte et RAG">
+      <div class="chap-head"><span class="chap-num">09</span><h2>Mémoire, gestion du contexte et RAG</h2></div>
+      <p class="goal">Comprendre comment un agent « se souvient » et accède à de la connaissance malgré une fenêtre limitée.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>Rappel : le modèle n'a pas de mémoire propre, seulement ce qui est dans son contexte. Un agent qui travaille longtemps accumule vite des milliers de tokens. Trois façons de s'en sortir :</p>
+        <div class="cols">
+          <div class="card"><span class="tag">Court terme</span><h4>L'historique</h4><p>Le fil de la tâche en cours. Disparaît à la fin de la session.</p></div>
+          <div class="card"><span class="tag">Résumé</span><h4>La compaction</h4><p>Quand le contexte approche de sa limite, on le résume pour garder l'essentiel.</p></div>
+          <div class="card"><span class="tag">Long terme</span><h4>Les notes</h4><p>L'agent écrit dans des fichiers ou une base et les relit à la prochaine session.</p></div>
+        </div>
+        <p>Pour accéder à des documents trop volumineux pour le contexte, on utilise le <code>RAG</code> (<i>Retrieval-Augmented Generation</i>) : on <b>cherche</b> les passages pertinents, on les <b>ajoute</b> à la question, puis le modèle <b>répond</b> à partir d'eux.</p>
+        <div class="diagram">
+          <svg viewBox="0 0 640 150" role="img" aria-label="RAG : question, recherche des passages pertinents, réponse fondée sur ces passages">
+            <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker></defs>
+            <rect class="box" x="10" y="45" width="130" height="60" rx="10"/><text x="75" y="72" text-anchor="middle" font-weight="700">Question</text><text class="sm" x="75" y="90" text-anchor="middle">de l'utilisateur</text>
+            <rect class="box-a" x="180" y="45" width="140" height="60" rx="10"/><text x="250" y="72" text-anchor="middle" font-weight="700">Recherche</text><text class="sm" x="250" y="90" text-anchor="middle">passages pertinents</text>
+            <rect class="box" x="360" y="45" width="130" height="60" rx="10"/><text x="425" y="72" text-anchor="middle" font-weight="700">Contexte</text><text class="sm" x="425" y="90" text-anchor="middle">question + passages</text>
+            <rect class="box-w" x="525" y="45" width="105" height="60" rx="10"/><text x="577" y="72" text-anchor="middle" font-weight="700">Réponse</text><text class="sm" x="577" y="90" text-anchor="middle">avec sources</text>
+            <path class="ln" d="M140 75 H178" marker-end="url(#ar3)"/><path class="ln" d="M320 75 H358" marker-end="url(#ar3)"/><path class="ln" d="M490 75 H523" marker-end="url(#ar3)"/>
+          </svg>
+          <p class="caption">Le modèle répond à partir des extraits retrouvés, pas de sa seule mémoire.</p>
+        </div>
+        <div class="callout analogy">
+          <b>Analogie : l'examen à livre ouvert</b>
+          <p>Plutôt que de faire réciter toute la documentation par cœur, on permet au modèle de feuilleter le bon chapitre avant de répondre. Résultat : des réponses à jour, vérifiables (on cite la source) et basées sur tes propres documents.</p>
+        </div>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Le pipeline RAG classique</h3>
+        <ol class="clean">
+          <li><b>Découper</b> (<i>chunking</i>) les documents en passages de quelques centaines de tokens, avec un léger chevauchement.</li>
+          <li><b>Vectoriser</b> chaque passage : un <code>embedding</code> transforme le texte en liste de nombres représentant son sens. Les passages de sens proche donnent des vecteurs proches.</li>
+          <li><b>Indexer</b> les vecteurs dans une base vectorielle.</li>
+          <li><b>Interroger</b> : vectoriser la question, récupérer les <i>k</i> passages les plus proches.</li>
+          <li><b>Générer</b> : fournir ces passages au modèle avec la consigne de répondre uniquement à partir d'eux et de citer ses sources.</li>
+        </ol>
+        <h3>Deux écoles de recherche</h3>
+        <div class="cols">
+          <div class="card"><h4>Recherche sémantique</h4><p>Par embeddings. Trouve des idées proches même sans mots communs. Demande un index à maintenir.</p></div>
+          <div class="card"><h4>Recherche par mots-clés</h4><p>Type BM25, <code>grep</code>. Précise pour les noms, codes, identifiants. Pas d'index vectoriel.</p></div>
+        </div>
+        <p>Beaucoup de systèmes combinent les deux (recherche <b>hybride</b>). À l'inverse, certains agents, dont les agents de code, privilégient la <b>recherche agentique</b> : ils cherchent eux-mêmes avec des outils (lister, <code>grep</code>, lire un fichier), affinent leur requête selon les résultats, sans construire d'index.</p>
+        <h3>Techniques de gestion du contexte</h3>
+        <ul class="clean">
+          <li><b>Compaction :</b> résumer l'historique et repartir d'un contexte propre contenant le résumé.</li>
+          <li><b>Notes persistantes :</b> fichier de suivi (<code>NOTES.md</code>, liste de tâches) que l'agent relit après un reset.</li>
+          <li><b>Isolation par sous-agents :</b> une recherche volumineuse est faite dans un contexte séparé qui ne renvoie qu'un résumé (chapitre <a href="4-multi-securite-prod.html#c12">12</a>).</li>
+        </ul>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Embeddings et similarité</h3>
+        <p>La proximité de deux vecteurs <b>a</b> et <b>b</b> se mesure souvent par la similarité cosinus : <code>cos(a, b) = (a · b) / (‖a‖ ‖b‖)</code>, proche de 1 quand les sens sont voisins. Les bases vectorielles utilisent des index approchés (HNSW, IVF) pour chercher parmi des millions de vecteurs en quelques millisecondes, au prix d'un rappel légèrement inférieur à 100 %.</p>
+        <h3>Ce qui fait réussir ou échouer un RAG</h3>
+        <ul class="clean">
+          <li><b>La qualité de la récupération prime.</b> Si le bon passage n'est pas dans les k résultats, le meilleur modèle ne peut rien. Mesure le <i>rappel@k</i> sur un jeu de questions avec réponses connues, avant de toucher au prompt de génération.</li>
+          <li><b>Taille des passages :</b> trop petits, ils perdent le contexte ; trop grands, ils diluent le sens. Découper selon la structure du document (titres, paragraphes) plutôt qu'à longueur fixe.</li>
+          <li><b>Contexte ajouté aux passages :</b> préfixer chaque passage d'une courte description de sa provenance (« Procédure congés, section 3 ») améliore nettement la récupération.</li>
+          <li><b>Reclassement (reranking) :</b> récupérer 50 candidats rapidement, puis les reclasser avec un modèle plus précis pour n'en garder que 5.</li>
+          <li><b>Évaluer séparément</b> la récupération (a-t-on trouvé le bon passage ?) et la génération (la réponse est-elle fidèle aux passages ?).</li>
+          <li><b>Sécurité :</b> les documents indexés sont du contenu non fiable (injection de prompt) et les droits d'accès doivent être respectés : un utilisateur ne doit jamais récupérer un passage qu'il n'a pas le droit de lire.</li>
+        </ul>
+        <div class="callout deep">
+          <b>RAG ou recherche agentique ?</b>
+          <p>Le RAG vectoriel excelle sur de gros corpus de texte et des questions floues. La recherche agentique (outils + itération) excelle sur des corpus structurés (code, fichiers, bases) et des questions précises, et évite l'index à tenir à jour, au prix de plus d'appels. Les deux se combinent.</p>
+        </div>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Le modèle n'a pas de mémoire propre : historique, compaction, notes dans des fichiers.</li>
+          <li>RAG : chercher les passages pertinents, les ajouter à la question, répondre à partir d'eux.</li>
+          <li>La qualité de la récupération prime sur celle de la génération.</li>
+          <li>Les agents de code cherchent eux-mêmes (recherche agentique) au lieu d'indexer.</li>
+        </ul>
+        <p>Suite : <a href="3-memoire-extensions.html#c10">Chapitre 10 · MCP : brancher des outils</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c9" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <section class="chap" id="c10" data-title="MCP : brancher des outils">
+      <div class="chap-head"><span class="chap-num">10</span><h2>MCP : une prise universelle pour les outils</h2></div>
+      <p class="goal">Comprendre le protocole MCP, son architecture et ses risques.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>Chaque outil (agenda, messagerie, base de données, ticketing) a sa propre interface. Sans standard, il faudrait écrire une intégration sur mesure pour chaque couple « application d'IA × outil ».</p>
+        <p>Le <code>MCP</code> (<i>Model Context Protocol</i>) est un protocole ouvert, lancé par Anthropic et repris par une bonne partie du secteur. Il définit une façon commune de décrire et d'appeler des outils et des sources de données.</p>
+        <div class="callout analogy">
+          <b>Analogie : la prise USB-C</b>
+          <p>Avant l'USB-C, chaque appareil avait son chargeur. Avec une prise commune, n'importe quel appareil se branche sur n'importe quel port. Avec MCP, un <b>serveur MCP</b> (par exemple celui de ton outil de tickets) se branche à tout <b>client MCP</b> (un assistant, un agent, un éditeur de code).</p>
+        </div>
+        <div class="cols">
+          <div class="card"><h4>Serveur MCP</h4><p>Petit programme qui expose les capacités d'une application.</p></div>
+          <div class="card"><h4>Client MCP</h4><p>L'application d'IA qui s'y connecte et met les outils à disposition du modèle.</p></div>
+        </div>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Architecture</h3>
+        <ul class="clean">
+          <li><b>Hôte :</b> l'application d'IA (Claude Code, un assistant de bureau, un IDE).</li>
+          <li><b>Client :</b> composant de l'hôte qui maintient une connexion avec un serveur.</li>
+          <li><b>Serveur :</b> expose des capacités. Il peut tourner sur ta machine ou être distant.</li>
+        </ul>
+        <h3>Ce qu'un serveur peut exposer</h3>
+        <div class="scroll-x"><table>
+          <thead><tr><th>Primitive</th><th>Rôle</th><th>Piloté par</th></tr></thead>
+          <tbody>
+            <tr><td><b>Tools</b> (outils)</td><td>Actions exécutables (créer un ticket, lancer une requête).</td><td>Le modèle</td></tr>
+            <tr><td><b>Resources</b> (ressources)</td><td>Données à lire (fichiers, enregistrements, schéma de base).</td><td>L'application / l'utilisateur</td></tr>
+            <tr><td><b>Prompts</b></td><td>Modèles de prompts réutilisables proposés à l'utilisateur.</td><td>L'utilisateur</td></tr>
+          </tbody>
+        </table></div>
+        <h3>Deux modes de transport</h3>
+        <ul class="clean">
+          <li><b>stdio :</b> l'hôte lance le serveur comme un processus local et lui parle par l'entrée/sortie standard. Simple, local.</li>
+          <li><b>HTTP (streamable) :</b> serveur distant, avec authentification (OAuth le plus souvent). Adapté aux services hébergés partagés.</li>
+        </ul>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Sous le capot : JSON-RPC 2.0</h3>
+        <p>MCP échange des messages JSON-RPC. Après une phase d'initialisation (négociation de version et de capacités), l'hôte liste puis appelle les outils :</p>
+<pre class="code"><code>→ {"jsonrpc":"2.0","id":1,"method":"tools/list"}
+← {"jsonrpc":"2.0","id":1,"result":{"tools":[
+     {"name":"chercher_salles","description":"Liste les salles libres",
+      "inputSchema":{"type":"object","properties":{"date":{"type":"string"}},"required":["date"]}}]}}
+
+→ {"jsonrpc":"2.0","id":2,"method":"tools/call",
+   "params":{"name":"chercher_salles","arguments":{"date":"2026-10-27"}}}
+← {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"Rhône (10 places)"}]}}</code></pre>
+        <h3>Un serveur minimal en Python</h3>
+        <span class="fname">serveur_salles.py</span>
+<pre class="code"><code>from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("salles")
+
+@mcp.tool()
+def chercher_salles(date: str, places_min: int = 1) -> str:
+    """Liste les salles libres à une date (AAAA-MM-JJ)."""
+    return "Rhône (10 places), Saône (8 places)"
+
+if __name__ == "__main__":
+    mcp.run()          # transport stdio par défaut</code></pre>
+        <p>La docstring et les annotations de type deviennent automatiquement la description et le schéma de l'outil.</p>
+        <h3>Risques et coûts propres à MCP</h3>
+        <ul class="clean">
+          <li><b>Coût en contexte :</b> les définitions de tous les outils de tous les serveurs connectés sont injectées dans le contexte. Dix serveurs bavards peuvent consommer des dizaines de milliers de tokens avant le premier message. Active seulement ce dont tu as besoin.</li>
+          <li><b>Chaîne d'approvisionnement :</b> un serveur MCP est du code exécuté avec tes droits : n'installe que des serveurs de confiance (chapitre <a href="4-multi-securite-prod.html#c13">13</a>).</li>
+          <li><b>Empoisonnement d'outil :</b> la <i>description</i> d'un outil est lue par le modèle. Une description malveillante peut contenir des instructions cachées. Même logique que l'injection de prompt.</li>
+          <li><b>Portée des droits :</b> un jeton d'accès trop large donne à l'agent plus de pouvoir que nécessaire. Utilise des jetons à portée minimale, en lecture seule quand c'est possible.</li>
+          <li><b>Combinaison dangereuse :</b> un serveur qui lit des données privées + un autre qui lit du contenu public non fiable + un troisième qui peut envoyer vers l'extérieur forment la « triade létale » (chapitre <a href="4-multi-securite-prod.html#c13">13</a>).</li>
+        </ul>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>MCP est un standard ouvert pour brancher des outils et des données à une application d'IA.</li>
+          <li>Un serveur expose des outils, des ressources et des prompts ; un client s'y connecte.</li>
+          <li>Les définitions d'outils coûtent du contexte : n'active que le nécessaire.</li>
+          <li>Un serveur MCP est du code exécuté avec tes droits : installe uniquement des sources de confiance.</li>
+        </ul>
+        <p>Suite : <a href="3-memoire-extensions.html#c11">Chapitre 11 · Skills : transmettre un savoir-faire</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c10" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <section class="chap" id="c11" data-title="Skills : transmettre un savoir-faire">
+      <div class="chap-head"><span class="chap-num">11</span><h2>Skills : transmettre un savoir-faire</h2></div>
+      <p class="goal">Savoir ce qu'est une skill, quand en écrire une, et en quoi elle diffère d'un outil.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>Un outil donne une <i>capacité</i> (« je peux lire un PDF »). Une <code>skill</code> donne un <i>savoir-faire</i> : un mode d'emploi écrit en langage naturel, avec éventuellement des scripts et des modèles de documents, qui explique comment réussir un type de tâche (« voici comment rédiger un compte rendu aux normes de l'entreprise »).</p>
+        <div class="callout analogy">
+          <b>Analogie : le classeur de procédures</b>
+          <p>Une nouvelle recrue connaît le métier en général. Les skills sont le classeur de procédures de ton équipe : elle sort la bonne fiche au bon moment au lieu de tout apprendre par cœur.</p>
+        </div>
+        <p>L'intérêt : l'agent ne charge une skill <b>que lorsqu'elle est utile</b>. On peut en avoir des dizaines sans saturer le contexte.</p>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Structure d'une skill</h3>
+        <p>Une skill est un <b>dossier</b> contenant au minimum un fichier <code>SKILL.md</code> : un en-tête (nom et description) suivi des instructions. Le dossier peut aussi contenir des documents de référence, des modèles et des scripts.</p>
+        <span class="fname">.claude/skills/compte-rendu-reunion/SKILL.md</span>
+<pre class="code"><code>---
+name: compte-rendu-reunion
+description: Rédige un compte rendu de réunion selon la charte interne. À utiliser quand l'utilisateur fournit des notes ou une transcription de réunion.
+---
+
+# Compte rendu de réunion
+
+1. Extraire : décisions, actions (qui / quoi / quand), points ouverts.
+2. Remplir le modèle `modele.md` situé dans ce dossier.
+3. Relire : chaque action a un responsable et une date.</code></pre>
+        <h3>Chargement progressif (progressive disclosure)</h3>
+        <div class="scroll-x"><table>
+          <thead><tr><th>Couche</th><th>Contenu</th><th>Quand c'est chargé</th></tr></thead>
+          <tbody>
+            <tr><td>1 · Métadonnées</td><td>Nom + description (quelques dizaines de tokens)</td><td>Toujours, au démarrage</td></tr>
+            <tr><td>2 · Instructions</td><td>Corps de <code>SKILL.md</code></td><td>Quand la tâche correspond à la description</td></tr>
+            <tr><td>3 · Ressources</td><td>Fichiers liés, modèles, scripts</td><td>Seulement si les instructions les demandent</td></tr>
+          </tbody>
+        </table></div>
+        <h3>Outil, skill, CLAUDE.md : lequel choisir ?</h3>
+        <p>Un outil donne une <i>capacité</i>, une skill une <i>procédure</i>, CLAUDE.md des règles valables <i>à chaque session</i> (chapitre <a href="5-cc-prise-en-main.html#c16">16</a>). Le tableau complet des mécanismes est au chapitre <a href="6-cc-extensions.html#c18">18</a>.</p>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Écrire une skill efficace</h3>
+        <ul class="clean">
+          <li><b>La description est le déclencheur.</b> C'est la seule partie que le modèle voit en permanence : elle doit dire <i>ce que fait</i> la skill et <i>quand</i> l'utiliser, avec les mots que l'utilisateur emploierait. Une description vague = skill jamais déclenchée ou déclenchée à tort.</li>
+          <li><b>Corps court, références séparées.</b> Garde <code>SKILL.md</code> concis (la procédure, moins de 500 lignes selon la documentation) et déporte le volumineux (guides détaillés, exemples) dans des fichiers liés : ils ne coûtent rien tant qu'ils ne sont pas lus.</li>
+          <li><b>Scripts pour le déterministe.</b> Pour ce qui doit être exact (conversion, validation, génération de fichier), fournis un script que l'agent <i>exécute</i> : son code n'entre pas dans le contexte, seule sa sortie y entre.</li>
+          <li><b>Un exemple de bon résultat</b> vaut dix lignes de consignes.</li>
+          <li><b>Tester comme du code :</b> lance la skill sur des cas réels, observe où l'agent hésite, et reformule. Teste aussi qu'elle <i>ne se déclenche pas</i> hors sujet.</li>
+        </ul>
+        <div class="callout warn">
+          <b>Sécurité</b>
+          <p>Une skill peut contenir des scripts exécutés avec tes droits et des instructions suivies par l'agent. Traite une skill externe comme un logiciel tiers : lis tout son contenu avant de l'installer, notamment les scripts et toute instruction qui touche au réseau ou aux secrets.</p>
+        </div>
+        <p>Les skills se partagent en les versionnant dans Git (dossier de projet) ou en les distribuant via des <b>plugins</b> (chapitre <a href="6-cc-extensions.html#c18">18</a>).</p>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Un outil donne une capacité ; une skill transmet un savoir-faire.</li>
+          <li>Chargement progressif : description toujours chargée, instructions à la demande, ressources si besoin.</li>
+          <li>La description est le déclencheur : dis ce que fait la skill et quand l'utiliser.</li>
+          <li>Traite une skill externe comme un logiciel tiers : lis-la avant de l'installer.</li>
+        </ul>
+        <p>Suite : <a href="4-multi-securite-prod.html#c12">Chapitre 12 · Plusieurs agents ensemble</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c11" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <div class="miniquiz" data-quiz="memoire-extensions"></div>
+
+    <div class="pager" id="pager"></div>
+
+    <footer>
+      <p>Support de formation interne. Les noms de produits cités le sont à titre d'exemple. Claude Code et l'écosystème évoluent vite : noms de commandes, options, chemins de configuration et fonctionnalités peuvent changer. Vérifie toujours la documentation officielle à jour avant de t'appuyer sur un détail, et consulte la politique IA de ton entreprise.</p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

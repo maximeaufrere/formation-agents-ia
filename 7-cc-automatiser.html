@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Claude Code : automatiser et bien travailler · Comprendre les agents IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="cc-automatiser">
+<div class="shell">
+  <nav class="toc" id="toc" aria-label="Sommaire"></nav>
+
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Partie 2 · Claude Code · Page 7</p>
+      <h1>Claude Code : automatiser et bien travailler</h1>
+      <p class="lead">Utiliser Claude Code dans des scripts et des pipelines, puis travailler avec méthode.</p>
+      <div class="page-meta" id="page-meta"></div>
+    </header>
+
+    <section class="chap" id="c21" data-title="Automatisation : mode non interactif, SDK, CI">
+      <div class="chap-head"><span class="chap-num">21</span><h2>Automatisation : mode non interactif, SDK et CI</h2></div>
+      <p class="goal">Utiliser Claude Code dans des scripts, des pipelines et des programmes.</p>
+
+      <div class="lvl" data-lvl="1">
+        <p>Claude Code n'est pas réservé au chat dans un terminal. Avec l'option <code>-p</code> (« print »), tu lui donnes une consigne, il travaille sans interaction, affiche le résultat et rend la main. On peut donc l'intégrer à des scripts, des tâches planifiées ou des chaînes d'intégration continue.</p>
+<pre class="code"><code>claude -p "Résume les changements de la dernière semaine dans ce dépôt"</code></pre>
+        <ul class="clean">
+          <li>Revue automatique des pull requests.</li>
+          <li>Génération de notes de version ou de documentation.</li>
+          <li>Tri d'issues, correction de petites erreurs de lint, mises à jour de dépendances.</li>
+        </ul>
+        <div class="callout warn">
+          <b>Sans humain pour valider</b>
+          <p>En mode non interactif, personne ne clique « autoriser ». Il faut donc <i>déclarer à l'avance</i> exactement ce qui est permis, et rien de plus.</p>
+        </div>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Options utiles</h3>
+        <div class="scroll-x"><table>
+          <thead><tr><th>Option</th><th>Effet</th></tr></thead>
+          <tbody>
+            <tr><td><code>-p "consigne"</code></td><td>Exécution non interactive.</td></tr>
+            <tr><td><code>--output-format json</code> (ou <code>stream-json</code>)</td><td>Sortie structurée exploitable par un programme (résultat, coût, identifiant de session).</td></tr>
+            <tr><td><code>--allowedTools</code></td><td>Liste des outils autorisés sans demande (ex. lecture + une commande précise).</td></tr>
+            <tr><td><code>--max-turns</code></td><td>Plafond de tours de boucle (mode non interactif).</td></tr>
+            <tr><td><code>--continue</code> / <code>--resume</code></td><td>Reprendre la dernière session ou une session précise.</td></tr>
+            <tr><td><code>--permission-mode</code></td><td>Mode de départ (<code>acceptEdits</code>, <code>dontAsk</code>, <code>auto</code>…). En automatisation, <code>dontAsk</code> refuse tout ce qui n'est pas autorisé d'avance.</td></tr>
+            <tr><td><code>--bare</code></td><td>Démarrage minimal : ignore hooks, skills, plugins, serveurs MCP et CLAUDE.md. Recommandé pour les scripts et la CI. Il n'utilise pas ton abonnement : fournis <code>ANTHROPIC_API_KEY</code>.</td></tr>
+          </tbody>
+        </table></div>
+<pre class="code"><code># Revue d'un diff, résultat en JSON
+git diff main | claude -p "Relis ce diff et liste les risques" --output-format json
+
+# Correction ciblée avec droits minimaux et plafond de tours
+claude -p "Corrige les erreurs de lint" \
+  --allowedTools "Read" "Edit" "Bash(npm run lint *)" \
+  --max-turns 8</code></pre>
+        <h3>Intégration continue</h3>
+        <p>Une action GitHub officielle permet de mentionner <code>@claude</code> dans une issue ou une pull request pour lui confier une tâche, ou de déclencher des revues automatiques. Les mêmes principes s'appliquent à d'autres systèmes d'intégration continue.</p>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Le SDK d'agent : la boucle, par programmation</h3>
+        <p>Le <b>SDK Claude Agent</b> (Python et TypeScript) expose la même boucle et les mêmes outils que Claude Code, pour construire tes propres agents : tu définis les instructions, les outils autorisés, les serveurs MCP, les hooks, puis tu consommes un flux de messages.</p>
+        <span class="fname">agent_todo.py</span>
+<pre class="code"><code>import asyncio
+from claude_agent_sdk import query, ClaudeAgentOptions
+
+async def main():
+    options = ClaudeAgentOptions(
+        allowed_tools=["Read", "Grep", "Glob"],     # approuvés sans demande (ne restreint pas les autres outils)
+        max_turns=6,
+    )
+    async for message in query(prompt="Liste les TODO du dépôt par fichier",
+                               options=options):
+        print(message)
+
+asyncio.run(main())</code></pre>
+        <h3>Exploiter Claude Code en production</h3>
+        <ul class="clean">
+          <li><b>Dépôt non fiable :</b> sans <code>--bare</code>, <code>claude -p</code> exécute les hooks de <code>.claude/settings.json</code> et connecte les serveurs de <code>.mcp.json</code> du dossier, sans dialogue de confiance. Sur du code externe, ajoute <code>--bare</code> et fournis seulement ce qu'il faut (<code>--settings</code>, <code>--mcp-config</code>).</li>
+          <li><b>Droits minimaux en CI :</b> jeton à portée minimale, <code>--allowedTools</code> restreint, aucun secret inutile dans l'environnement, exécution dans un conteneur éphémère. Un pipeline qui lit des issues ou des PR externes expose l'agent à l'injection de prompt : n'y donne ni secrets ni droits d'écriture larges.</li>
+          <li><b>Sorties structurées :</b> exploite le JSON (champ de résultat, coût, durée) pour décider de la suite, journaliser et refuser les résultats incomplets.</li>
+          <li><b>Budget et limites :</b> <code>--max-turns</code>, délai d'expiration du job, alerte sur le coût par exécution.</li>
+          <li><b>Parallélisme :</b> pour lancer plusieurs agents sur le même dépôt sans conflits, donne à chacun sa propre copie de travail (<code>git worktree</code>).</li>
+          <li><b>Idempotence et relecture :</b> l'agent propose (branche, pull request), un humain ou un contrôle automatique valide la fusion. Évite que l'agent pousse directement sur la branche principale.</li>
+          <li><b>Reproductibilité :</b> épingle la version de Claude Code et du modèle dans les jobs récurrents, et rejoue un jeu de tâches avant toute montée de version.</li>
+        </ul>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li><code>claude -p</code> exécute sans interaction : scripts, tâches planifiées, CI.</li>
+          <li>Sans humain pour valider, déclare à l'avance ce qui est permis.</li>
+          <li>Le SDK d'agent expose la même boucle en Python et en TypeScript.</li>
+          <li>En CI : droits minimaux, plafond de tours, sortie JSON. L'agent propose, un humain fusionne.</li>
+        </ul>
+        <p>Suite : <a href="7-cc-automatiser.html#c22">Chapitre 22 · Méthodes de travail avec Claude Code</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c21" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <section class="chap" id="c22" data-title="Méthodes de travail avec Claude Code">
+      <div class="chap-head"><span class="chap-num">22</span><h2>Méthodes de travail et bonnes pratiques</h2></div>
+      <p class="goal">Obtenir de bons résultats de façon régulière avec Claude Code, et éviter les pièges.</p>
+
+      <div class="lvl" data-lvl="1">
+        <div class="callout key">
+          <b>La méthode en quatre temps</b>
+          <ol class="clean" style="margin:6px 0 0">
+            <li><b>Explorer :</b> demande à Claude de lire et de t'expliquer le code concerné (sans rien modifier).</li>
+            <li><b>Planifier :</b> en mode plan, fais proposer l'approche, discute-la, corrige-la.</li>
+            <li><b>Coder :</b> valide le plan, laisse Claude implémenter.</li>
+            <li><b>Valider :</b> lance les tests, relis les changements, fais-les commiter.</li>
+          </ol>
+        </div>
+        <h3>Cinq réflexes</h3>
+        <ul class="clean">
+          <li><b>Donne-lui un moyen de vérifier</b> (tests, commande de build, capture d'écran attendue). C'est le conseil le plus rentable.</li>
+          <li><b>Sois précis</b> : fichiers concernés, comportement attendu, exemple.</li>
+          <li><b>Petits pas :</b> une tâche à la fois, un commit par étape.</li>
+          <li><b><code>/clear</code> entre deux tâches sans rapport</b> pour repartir avec un contexte propre.</li>
+          <li><b>Relis toujours</b> ce qui sera livré : tu restes responsable.</li>
+        </ul>
+        <h3>Mauvaise et bonne demande</h3>
+        <div class="cols">
+          <div class="card"><span class="tag">Trop vague</span><p>« Améliore la page de connexion. »</p></div>
+          <div class="card"><span class="tag">Précis et vérifiable</span><p>« Dans <code>@src/login.tsx</code>, affiche un message d'erreur sous le champ mot de passe quand l'API renvoie 401. Ajoute un test dans <code>login.test.tsx</code> et lance-le. »</p></div>
+        </div>
+      </div>
+
+      <div class="lvl" data-lvl="2">
+        <h3>Trois workflows éprouvés</h3>
+        <ul class="clean">
+          <li><b>Explorer → planifier → coder → commiter.</b> Idéal pour une fonctionnalité nouvelle : le plan écrit sert de point de contrôle avant de toucher au code.</li>
+          <li><b>Test d'abord (TDD).</b> Demande d'écrire des tests qui échouent pour le comportement voulu, commite-les, puis laisse Claude coder jusqu'à ce qu'ils passent, sans modifier les tests. La cible est objective, la boucle de vérification est prête.</li>
+          <li><b>Correction depuis un symptôme.</b> Colle l'erreur, les logs, ou une capture d'écran ; demande de reproduire le problème par un test avant de corriger.</li>
+        </ul>
+        <h3>Gérer le contexte</h3>
+        <ul class="clean">
+          <li>Surveille le remplissage de la session (voir les chapitres <a href="1-bases.html#c3">3</a> et <a href="3-memoire-extensions.html#c9">9</a>).</li>
+          <li><code>/compact</code> avec des consignes (« garde la liste des fichiers modifiés et les décisions ») avant de poursuivre une longue tâche.</li>
+          <li><code>/clear</code> entre les sujets ; <code>/resume</code> pour retrouver une session.</li>
+          <li>Pour une investigation qui lit beaucoup de fichiers, demande de la <b>déléguer à un sous-agent</b> : seul le résumé revient dans ta session.</li>
+        </ul>
+        <h3>Travailler en parallèle</h3>
+        <p>Ouvre plusieurs sessions sur des tâches indépendantes, chacune dans son propre <b>worktree Git</b> (copie de travail séparée du même dépôt). Les modifications ne se marchent pas dessus, et chaque session garde son contexte propre.</p>
+      </div>
+
+      <div class="lvl" data-lvl="3">
+        <h3>Principes d'expert</h3>
+        <ul class="clean">
+          <li><b>Investis dans le harnais, pas seulement dans le prompt.</b> La qualité vient de l'environnement : tests rapides et fiables, linter, typage, CLAUDE.md concis, hooks de vérification, commandes d'amorçage. Un projet bien outillé multiplie l'efficacité de l'agent.</li>
+          <li><b>Séparer l'auteur et le relecteur.</b> Une seconde session (ou un sous-agent) au contexte vierge relit le diff : elle n'est pas biaisée par le raisonnement de l'auteur et repère plus d'erreurs. Variante : une session écrit les tests, une autre le code.</li>
+          <li><b>Spécifier l'intention, pas la procédure.</b> Décris le résultat et les contraintes ; laisse l'agent choisir les étapes. Excès de micro-gestion = perte de ses capacités d'adaptation.</li>
+          <li><b>Mesurer.</b> Suis le taux de changements acceptés sans reprise, le temps de cycle, le coût par tâche. Compare les approches (avec/sans plan, avec/sans sous-agent) sur vos propres tâches.</li>
+          <li><b>Capitaliser.</b> Chaque erreur répétée devient soit une ligne de CLAUDE.md, soit un hook, soit une commande/skill. L'équipe progresse collectivement.</li>
+        </ul>
+        <h3>Anti-modèles à éviter</h3>
+        <div class="scroll-x"><table>
+          <thead><tr><th>Piège</th><th>Symptôme</th><th>Remède</th></tr></thead>
+          <tbody>
+            <tr><td>Session « fourre-tout »</td><td>Plusieurs sujets mélangés, réponses dispersées</td><td><code>/clear</code> entre les tâches</td></tr>
+            <tr><td>Corrections en rafale</td><td>Tu rectifies trois fois la même chose</td><td>Reviens à un point de contrôle, reformule la demande initiale ou repars d'une session propre</td></tr>
+            <tr><td>CLAUDE.md obèse</td><td>Règles ignorées</td><td>Élaguer, déplacer vers hooks et sous-dossiers</td></tr>
+            <tr><td>Aucune vérification</td><td>Code plausible mais faux, tests absents</td><td>Fournir tests, commandes de build, critères d'acceptation</td></tr>
+            <tr><td>Exploration sans limite</td><td>Des dizaines de fichiers lus, contexte saturé</td><td>Cadrer la recherche ou déléguer à un sous-agent</td></tr>
+            <tr><td>Approbation par réflexe</td><td>Tu valides sans lire</td><td>Règles <code>allow</code> pour le sûr, attention réservée au reste</td></tr>
+            <tr><td>Confiance aveugle</td><td>Bogues subtils en production</td><td>Relecture, tests, revue indépendante</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout deep">
+          <b>La posture à adopter</b>
+          <p>Traite Claude Code comme un développeur talentueux, rapide, mais sans mémoire de ton projet et sans accès à ton intuition métier : donne-lui le contexte (CLAUDE.md), un objectif clair, des moyens de vérifier son travail, et garde la responsabilité de ce qui est livré.</p>
+        </div>
+      </div>
+      <div class="callout key retenir">
+        <b>À retenir</b>
+        <ul class="clean">
+          <li>Quatre temps : explorer, planifier, coder, valider.</li>
+          <li>Donne un moyen de vérifier : tests, build, critères d'acceptation.</li>
+          <li><code>/clear</code> entre deux tâches ; un sous-agent pour les lectures volumineuses.</li>
+          <li>Investis dans le harnais (tests, linter, CLAUDE.md, hooks), pas seulement dans le prompt.</li>
+        </ul>
+        <p>Suite : <a href="8-ressources.html#quiz">Quiz final</a></p>
+      </div>
+      <div class="done-row"><button type="button" data-done="c22" aria-pressed="false">Marquer comme lu</button></div>
+    </section>
+
+    <div class="miniquiz" data-quiz="cc-automatiser"></div>
+
+    <div class="pager" id="pager"></div>
+
+    <footer>
+      <p>Support de formation interne. Les noms de produits cités le sont à titre d'exemple. Claude Code et l'écosystème évoluent vite : noms de commandes, options, chemins de configuration et fonctionnalités peuvent changer. Vérifie toujours la documentation officielle à jour avant de t'appuyer sur un détail, et consulte la politique IA de ton entreprise.</p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
