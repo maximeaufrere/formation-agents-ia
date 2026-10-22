@@ -186,6 +186,21 @@
     $$("section.chap").forEach(function (s) { io.observe(s); });
   }
 
+  /* ---------- bouton « copier » sur les blocs de code ---------- */
+  function buildCopy() {
+    if (!navigator.clipboard) return;
+    $$("pre.code").forEach(function (pre) {
+      var b = el("button", { type: "button", "class": "copy-btn", "aria-label": "Copier le code" }, "Copier");
+      b.addEventListener("click", function () {
+        navigator.clipboard.writeText(($("code", pre) || pre).textContent).then(function () {
+          b.textContent = "Copié";
+          setTimeout(function () { b.textContent = "Copier"; }, 1500);
+        }, function () {});
+      });
+      pre.appendChild(b);
+    });
+  }
+
   /* ---------- barre de lecture et ancres de titres ---------- */
   function buildReadBar() {
     var bar = el("div", { "class": "readbar", "aria-hidden": "true" });
@@ -468,10 +483,11 @@
       items.forEach(function (it, i) {
         var box = $("#" + uid + "q" + i), sel = form.querySelector("input[name=\"" + uid + "q" + i + "\"]:checked"), fb = $(".fb", box);
         box.classList.remove("right", "wrong");
+        $$("label", box).forEach(function (l, j) { l.classList.toggle("is-answer", false); });
         if (!sel) { fb.textContent = "Pas de réponse. " + it.e; return; }
         answered++;
         if (+sel.value === it.a) { ok++; box.classList.add("right"); fb.textContent = "Bonne réponse. " + it.e; }
-        else { box.classList.add("wrong"); fb.textContent = "Pas tout à fait. " + it.e; }
+        else { box.classList.add("wrong"); fb.textContent = "Pas tout à fait. " + it.e; $$("label", box)[it.a].classList.add("is-answer"); }
       });
       var msg = ok + " / " + items.length;
       if (answered < items.length) msg += " (" + (items.length - answered) + " sans réponse)";
@@ -683,6 +699,7 @@
   autoTerms();
   bindTerms();
   buildReadBar();
+  buildCopy();
   buildAnchors();
   buildQuizzes();
   buildGlossary();

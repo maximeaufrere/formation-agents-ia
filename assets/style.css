@@ -209,7 +209,12 @@ dl.gl dd { margin: 2px 0 0; color: var(--muted); }
 .q { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 14px 18px; margin: 14px 0; max-width: 72ch; }
 .q fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .q legend { font-weight: 700; padding: 0; margin-bottom: 6px; }
-.q label { display: flex; gap: 10px; align-items: baseline; padding: 5px 0; cursor: pointer; }
+.q label { display: flex; gap: 10px; align-items: baseline; padding: 8px 12px; margin: 6px 0; cursor: pointer; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); transition: border-color .15s, background .15s; }
+.q label:hover { border-color: var(--accent); }
+.q label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.q.wrong label:has(input:checked) { border-color: var(--bad); background: var(--bad-soft); }
+.q label.is-answer { border-color: var(--ok); background: var(--ok-soft); }
+.q input { accent-color: var(--accent); }
 .q .fb { margin-top: 8px; font-size: 0.95rem; }
 .q.right { border-color: var(--ok); } .q.wrong { border-color: var(--bad); }
 .q.right .fb { color: var(--ok); } .q.wrong .fb { color: var(--bad); }
@@ -271,3 +276,15 @@ footer { margin-top: 64px; color: var(--muted); font-size: 0.9rem; }
 .home-card .ring { position: absolute; top: 14px; right: 14px; width: 26px; height: 26px; border-radius: 50%; background: conic-gradient(var(--accent) var(--p, 0%), var(--line) 0); }
 .home-card .ring::after { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: var(--surface); }
 @media (prefers-reduced-motion: reduce) { .home-card { transition: none; } .home-card:hover { transform: none; } }
+
+/* code : bouton copier */
+pre.code { position: relative; }
+.copy-btn { position: absolute; top: 8px; right: 8px; font: 600 0.7rem var(--mono); background: var(--surface); color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; opacity: 0; transition: opacity .15s; }
+pre.code:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+.copy-btn:hover { color: var(--fg); }
+/* démos : habillage */
+.demo { border-radius: 14px; box-shadow: 0 1px 0 var(--line); }
+.demo textarea:focus-visible, .gl-search:focus-visible, .toc-search input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btn { transition: filter .15s; }
+.btn:hover:not(:disabled) { filter: brightness(1.08); }
+#score:not(:empty) { padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; display: inline-block; }
