@@ -88,7 +88,7 @@
           <li><b>Résultats compacts et utiles :</b> renvoie des noms lisibles plutôt que des identifiants opaques, pagine, tronque, et explique comment affiner (« 200 résultats, ajoute un filtre »).</li>
           <li><b>Messages d'erreur actionnables :</b> « date invalide, attendu AAAA-MM-JJ » plutôt que « erreur 400 ».</li>
           <li><b>Idempotence et sécurité :</b> une action répétée par erreur (envoyer deux fois un email) ne doit pas faire de dégâts ; les actions destructrices demandent une confirmation.</li>
-          <li><b>Contrôle du choix :</b> le paramètre <code>tool_choice</code> permet de forcer un outil précis, d'en imposer un parmi plusieurs, ou d'interdire les outils.</li>
+          <li><b>Contrôle du choix :</b> le paramètre <code>tool_choice</code> accepte quatre valeurs : <code>auto</code> (le modèle décide, valeur par défaut), <code>any</code> (impose un outil parmi ceux fournis), <code>tool</code> (force un outil précis) et <code>none</code> (interdit les outils). Attention : sur les modèles Claude les plus récents (par exemple Sonnet 5.5 et Opus 5.5), <code>any</code> et <code>tool</code> renvoient une erreur 400. On garde alors <code>auto</code> et on ajoute <code>strict: true</code> sur l'outil pour garantir des paramètres conformes au schéma.</li>
         </ul>
       </div>
       <div class="callout key retenir">
