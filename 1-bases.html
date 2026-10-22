@@ -100,7 +100,7 @@
       <div class="lvl" data-lvl="2">
         <h3>Les trois phases de vie d'un modèle</h3>
         <ul class="clean">
-          <li><b>Pré-entraînement.</b> Le modèle lit des milliers de milliards de tokens et apprend à prédire le suivant. Il acquiert langue, faits, raisonnement et code. Coût : des millions d'euros de calcul.</li>
+          <li><b>Pré-entraînement.</b> Le modèle lit un volume énorme de tokens (souvent des milliers de milliards pour les plus gros modèles) et apprend à prédire le suivant. Il acquiert langue, faits, raisonnement et code. Coût : souvent des millions d'euros de calcul.</li>
           <li><b>Post-entraînement.</b> Un affinage supervisé (<i>SFT</i>) sur des exemples de bonnes réponses, puis un apprentissage par renforcement à partir de retours humains ou automatiques (<i>RLHF</i>, <i>RLAIF</i>). C'est ce qui transforme un « prédicteur de texte » en assistant qui suit des consignes et refuse certaines demandes.</li>
           <li><b>Inférence.</b> L'utilisation, c'est-à-dire ce que tu fais en l'appelant. Les poids du modèle sont figés.</li>
         </ul>
@@ -120,7 +120,7 @@
         <ul class="clean">
           <li><b>Architecture Transformer.</b> Chaque couche combine une <i>auto-attention</i> (pondère l'importance des tokens précédents pour chaque position) et un perceptron (transformation non linéaire).</li>
           <li><b>Coût de l'attention.</b> Il croît environ de façon quadratique avec la longueur du contexte. Les implémentations utilisent un <b>cache KV</b> (clés/valeurs déjà calculées) pour ne pas tout recalculer à chaque token généré ; ce cache occupe de la mémoire GPU proportionnelle au contexte.</li>
-          <li><b>Échantillonnage.</b> Température (aplatit ou accentue la distribution), <i>top-p</i> (ne garde que les tokens dont la probabilité cumulée atteint p), <i>top-k</i> (ces trois réglages ne sont plus acceptés par les modèles Claude récents, voir c4). Température proche de 0 = quasi déterministe, sans garantie stricte à cause du calcul parallèle sur GPU.</li>
+          <li><b>Échantillonnage.</b> Température (aplatit ou accentue la distribution), <i>top-p</i> (ne garde que les tokens dont la probabilité cumulée atteint p), <i>top-k</i> (ces trois réglages ne sont plus acceptés par les modèles Claude récents, voir c4). Température proche de 0 = quasi déterministe, sans garantie stricte (le calcul parallèle sur GPU peut y contribuer).</li>
           <li><b>Lois d'échelle.</b> La perte diminue de façon régulière quand on augmente données, paramètres et calcul. Les progrès récents viennent aussi du post-entraînement par renforcement sur des tâches vérifiables (code qui passe des tests, problèmes mathématiques), qui rend les modèles bien meilleurs en comportement d'agent.</li>
         </ul>
         <div class="callout deep">
@@ -278,7 +278,7 @@ print(msg.content[0].text)
 print(msg.usage.input_tokens, msg.usage.output_tokens)   # mesurer le coût</code></pre>
         <h3>Le prompt est un logiciel : il se teste</h3>
         <ul class="clean">
-          <li><b>Jeu d'évaluation.</b> Constitue 20 à 100 cas représentatifs (dont des cas pièges) avec le résultat attendu. Toute modification de prompt se juge sur ce jeu, pas sur trois essais à la main.</li>
+          <li><b>Jeu d'évaluation.</b> Constitue quelques dizaines de cas représentatifs (par exemple 20 à 100, dont des cas pièges) avec le résultat attendu. Toute modification de prompt se juge sur ce jeu, pas sur trois essais à la main.</li>
           <li><b>Sorties structurées.</b> Quand un programme consomme la réponse, impose un schéma JSON (fonctionnalité de sortie structurée ou appel d'outil dont les paramètres sont le schéma) et valide-le côté code. Ne parse jamais du texte libre en production.</li>
           <li><b>Séparation instructions/données.</b> Tout contenu externe est placé dans des balises dédiées et déclaré comme données : première défense, imparfaite, contre l'injection de prompt (chapitre <a href="4-multi-securite-prod.html#c13">13</a>).</li>
           <li><b>Déterminisme.</b> Même quand le réglage de température existe, deux appels peuvent différer légèrement ; sur les modèles Claude récents, tu ne peux de toute façon pas la fixer. Conçois les tests avec des critères (« contient la décision X ») plutôt qu'avec une égalité de chaînes.</li>
