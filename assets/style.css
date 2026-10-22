@@ -288,3 +288,7 @@ pre.code:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .btn { transition: filter .15s; }
 .btn:hover:not(:disabled) { filter: brightness(1.08); }
 #score:not(:empty) { padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; display: inline-block; }
+
+.home-link { display: block; margin: 0 0 14px; padding: 6px 8px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; text-decoration: none; color: var(--muted); }
+.home-link:hover { background: var(--surface-2); color: var(--fg); }
+.home-link.current { background: var(--accent-soft); color: var(--fg); }

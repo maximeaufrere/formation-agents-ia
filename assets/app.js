@@ -59,6 +59,10 @@
 
   function buildToc() {
     if (!toc) return;
+    var home = pages[0];
+    var homeLink = el("a", { href: home.file, "class": "home-link" + (cur === home ? " current" : "") }, "← " + home.title);
+    if (cur === home) homeLink.setAttribute("aria-current", "page");
+    toc.appendChild(homeLink);
     toc.appendChild(el("p", { "class": "toc-title" }, "Ma progression"));
     var bar = el("div", { "class": "progress", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": "0", id: "pbar" });
     bar.appendChild(el("i"));
@@ -89,6 +93,7 @@
     var list = el("ol", { id: "toc-list" });
     var lastPart = null;
     pages.forEach(function (p) {
+      if (p === home) return;
       if (p.part && p.part !== lastPart) {
         list.appendChild(el("li", { "class": "toc-part" }, D.parts[p.part]));
         lastPart = p.part;
