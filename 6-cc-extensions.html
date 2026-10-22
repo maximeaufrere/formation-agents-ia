@@ -178,7 +178,7 @@ sys.exit(0)</code></pre>
         <b>À retenir</b>
         <ul class="clean">
           <li>Un hook est une commande exécutée par le programme à un événement précis, sans dépendre du modèle.</li>
-          <li>Code de sortie 2 : l'action est bloquée et le message revient à Claude.</li>
+          <li>Code de sortie 2 : sur les événements qui peuvent bloquer (<code>PreToolUse</code>, <code>Stop</code>...), l'action est bloquée et le message revient à Claude. Les autres codes non nuls (comme 1) ne bloquent pas : pour imposer une règle, utilise 2.</li>
           <li>Un hook s'exécute avec tes droits : relis ceux d'un dépôt avant d'y ouvrir une session.</li>
           <li>Un hook <code>Stop</code> qui lance les tests force Claude à continuer jusqu'au vert.</li>
         </ul>
@@ -206,7 +206,7 @@ sys.exit(0)</code></pre>
 claude mcp add --transport http mon-service https://exemple.com/mcp
 
 # Serveur local (processus lancé par Claude Code, transport stdio)
-claude mcp add --transport stdio --env DB_URL=postgres://lecture-seule@localhost/test ma-base -- npx -y serveur-mcp-base
+claude mcp add --env DB_URL=postgres://lecture-seule@localhost/test --transport stdio ma-base -- npx -y serveur-mcp-base
 
 claude mcp list          # voir les serveurs configurés
 /mcp                     # dans la session : état, authentification (OAuth)</code></pre>
@@ -240,8 +240,8 @@ claude mcp list          # voir les serveurs configurés
 }</code></pre>
         <p>Les variables d'environnement (<code>${DB_URL_TEST}</code>) évitent de versionner des secrets : chaque développeur fournit les siens.</p>
         <ul class="clean">
-          <li><b>Coût en contexte :</b> comme pour tout serveur MCP (chapitre <a href="3-memoire-extensions.html#c10">10</a>, niveau 3), les définitions d'outils occupent le contexte : désactive les serveurs inutiles pour la tâche. Certaines configurations chargent les outils à la demande plutôt que tous d'avance.</li>
-          <li><b>Taille des sorties :</b> un outil qui renvoie des dizaines de milliers de tokens sature la fenêtre. Un serveur bien conçu pagine et filtre.</li>
+          <li><b>Coût en contexte :</b> comme pour tout serveur MCP (chapitre <a href="3-memoire-extensions.html#c10">10</a>, niveau 3), les définitions d'outils occupent le contexte : désactive les serveurs inutiles pour la tâche. Par défaut, Claude Code charge les outils MCP à la demande (tool search) : seuls leurs noms occupent le contexte au démarrage. Sur certains modèles anciens ou déploiements, ou si tu désactives cette option (<code>ENABLE_TOOL_SEARCH=false</code>), toutes les définitions sont chargées d'avance.</li>
+          <li><b>Taille des sorties :</b> au-delà de 10 000 tokens, Claude Code avertit ; au-delà de 25 000 tokens par défaut, il enregistre le résultat dans un fichier au lieu de l'injecter dans la conversation. Même ainsi, de gros résultats coûtent du contexte : un serveur bien conçu pagine et filtre.</li>
           <li><b>Moindre privilège :</b> jeton en lecture seule pour la base de test, jamais les identifiants de production, portée minimale pour les API (principe : chapitre <a href="4-multi-securite-prod.html#c13">13</a>).</li>
           <li><b>Confiance et injection :</b> le contenu récupéré via MCP est une donnée non fiable (chapitre <a href="4-multi-securite-prod.html#c13">13</a>) : vérifie les actions qui en découlent.</li>
           <li><b>Approbation des serveurs de projet :</b> un <code>.mcp.json</code> versionné lance du code sur ta machine ; examine-le avant d'accepter, notamment après un <code>git pull</code> qui le modifie.</li>
