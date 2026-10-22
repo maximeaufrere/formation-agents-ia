@@ -156,9 +156,9 @@
 ← {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"Rhône (10 places)"}]}}</code></pre>
         <h3>Un serveur minimal en Python</h3>
         <span class="fname">serveur_salles.py</span>
-<pre class="code"><code>from mcp.server.fastmcp import FastMCP
+<pre class="code"><code>from mcp.server import MCPServer
 
-mcp = FastMCP("salles")
+mcp = MCPServer("salles")
 
 @mcp.tool()
 def chercher_salles(date: str, places_min: int = 1) -> str:
