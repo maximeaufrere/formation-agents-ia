@@ -11,19 +11,21 @@
      On double donc chaque écriture dans window.name, qui survit à la navigation dans le même onglet. */
   var mirror = {};
   try { var parsed = JSON.parse(window.name); if (parsed && parsed.cours) mirror = parsed.cours; } catch (e) {}
+  /* Sur GitHub Pages, tous les sites du compte partagent l'origine *.github.io, donc le même localStorage : on préfixe les clés. */
+  var PREFIX = "formation-agents-ia:";
   var store = {
     get: function (k) {
       var v = null;
-      try { v = window.localStorage.getItem(k); } catch (e) {}
+      try { v = window.localStorage.getItem(PREFIX + k); } catch (e) {}
       return v != null ? v : (k in mirror ? mirror[k] : null);
     },
     set: function (k, v) {
-      try { window.localStorage.setItem(k, v); } catch (e) {}
+      try { window.localStorage.setItem(PREFIX + k, v); } catch (e) {}
       mirror[k] = v;
       try { window.name = JSON.stringify({ cours: mirror }); } catch (e) {}
     }
   };
-  Object.keys(mirror).forEach(function (k) { try { if (window.localStorage.getItem(k) == null) window.localStorage.setItem(k, mirror[k]); } catch (e) {} });
+  Object.keys(mirror).forEach(function (k) { try { if (window.localStorage.getItem(PREFIX + k) == null) window.localStorage.setItem(PREFIX + k, mirror[k]); } catch (e) {} });
   function el(tag, attrs, text) {
     var n = document.createElement(tag);
     Object.keys(attrs || {}).forEach(function (k) { n.setAttribute(k, attrs[k]); });
@@ -45,7 +47,7 @@
   pages.forEach(function (p) { allChapterIds = allChapterIds.concat(realChapters(p)); });
   function pageNumber(p) { return pages.indexOf(p); }
 
-  /* ---------- progression (clés localStorage inchangées : done:cN) ---------- */
+  /* ---------- progression (clés localStorage : PREFIX + done:cN) ---------- */
   var done = {};
   allChapterIds.forEach(function (id) { done[id] = store.get("done:" + id) === "1"; });
 
