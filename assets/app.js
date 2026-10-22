@@ -66,16 +66,15 @@
     toc.appendChild(el("p", { "class": "progress-label", id: "plabel" }));
 
     var ctl = el("div", { "class": "lvl-ctl", role: "group", "aria-labelledby": "lvl-title" });
-    ctl.appendChild(el("p", { "class": "toc-title", id: "lvl-title" }, "Je veux lire :"));
+    ctl.appendChild(el("p", { "class": "toc-title", id: "lvl-title" }, "Ton niveau"));
     var opts = el("div", { "class": "lvl-opts" });
     LEVELS.forEach(function (l) {
-      var b = el("button", { type: "button", "class": "lvl-opt", "data-l": l.n, "aria-pressed": "false" });
-      b.appendChild(el("b", {}, l.name));
-      b.appendChild(el("span", {}, l.desc));
+      var b = el("button", { type: "button", "class": "lvl-opt", "data-l": l.n, "aria-pressed": "false", title: l.name }, String(l.n));
       b.addEventListener("click", function () { setLevel(l.n); });
       opts.appendChild(b);
     });
     ctl.appendChild(opts);
+    ctl.appendChild(el("p", { "class": "lvl-hint", id: "lvl-hint", "aria-live": "polite" }));
     toc.appendChild(ctl);
 
     var sw = el("div", { "class": "toc-search" });
@@ -153,6 +152,10 @@
       b.setAttribute("aria-pressed", on);
       b.textContent = on ? "✓ Lu" : "Marquer comme lu";
     });
+    $$("[data-ring]").forEach(function (r) {
+      var ids = realChapters(pageById[r.dataset.ring]);
+      r.style.setProperty("--p", ids.length ? (100 * ids.filter(function (id) { return done[id]; }).length / ids.length) + "%" : "0%");
+    });
     $$("[data-home-count]").forEach(function (s) {
       var ids = realChapters(pageById[s.dataset.homeCount]);
       s.textContent = ids.filter(function (id) { return done[id]; }).length + " / " + ids.length + " chapitres lus";
@@ -176,16 +179,57 @@
       entries.forEach(function (e) {
         if (e.isIntersecting) {
           $$(".toc a[data-target]").forEach(function (a) { a.classList.toggle("active", a.dataset.target === e.target.id); });
+          store.set("last", e.target.id);
         }
       });
     }, { rootMargin: "-20% 0px -70% 0px" });
     $$("section.chap").forEach(function (s) { io.observe(s); });
   }
 
+  /* ---------- bouton « copier » sur les blocs de code ---------- */
+  function buildCopy() {
+    if (!navigator.clipboard) return;
+    $$("pre.code").forEach(function (pre) {
+      var b = el("button", { type: "button", "class": "copy-btn", "aria-label": "Copier le code" }, "Copier");
+      b.addEventListener("click", function () {
+        navigator.clipboard.writeText(($("code", pre) || pre).textContent).then(function () {
+          b.textContent = "Copié";
+          setTimeout(function () { b.textContent = "Copier"; }, 1500);
+        }, function () {});
+      });
+      pre.appendChild(b);
+    });
+  }
+
+  /* ---------- barre de lecture et ancres de titres ---------- */
+  function buildReadBar() {
+    var bar = el("div", { "class": "readbar", "aria-hidden": "true" });
+    var i = el("i");
+    bar.appendChild(i);
+    document.body.appendChild(bar);
+    function upd() {
+      var h = document.documentElement.scrollHeight - window.innerHeight;
+      i.style.width = (h > 0 ? Math.min(100, 100 * window.scrollY / h) : 0) + "%";
+    }
+    window.addEventListener("scroll", upd, { passive: true });
+    upd();
+  }
+  function buildAnchors() {
+    $$("section.chap[id] h2, .lvl h3[id]").forEach(function (h) {
+      var sec = h.closest("section.chap");
+      var id = h.id || (sec && sec.id);
+      if (!id) return;
+      var a = el("a", { href: "#" + id, "class": "anchor", "aria-label": "Lien vers cette section" }, "#");
+      h.appendChild(a);
+    });
+  }
+
   /* ---------- niveau de lecture (clé « maxlvl » inchangée) ---------- */
   function setLevel(n) {
     document.body.setAttribute("data-maxlvl", n);
     $$(".lvl-opt").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.l === String(n)); });
+    var hint = $("#lvl-hint");
+    if (hint) hint.textContent = LEVELS[n - 1].name + " : " + LEVELS[n - 1].desc;
     store.set("maxlvl", String(n));
   }
 
@@ -282,6 +326,19 @@
   /* ---------- accueil : parcours et carte des pages ---------- */
   function buildHome() {
     var paths = $("#home-paths"), map = $("#home-map");
+    var cta = $("#home-resume");
+    if (cta) {
+      var last = store.get("last"), target = null;
+      pages.forEach(function (p) { if (p.chapters.indexOf(last) !== -1) target = p; });
+      if (target && chapById[last]) {
+        cta.href = target.file + "#" + last;
+        cta.textContent = "Reprendre : " + chapById[last].title + " →";
+      } else {
+        cta.href = pages[1].file;
+        cta.textContent = "Commencer la formation →";
+      }
+      cta.hidden = false;
+    }
     if (paths) {
       D.paths.forEach(function (pa) {
         var first = pageById[pa.pages[0]];
@@ -301,7 +358,11 @@
         a.appendChild(el("span", { "class": "tag" }, D.parts[p.part]));
         a.appendChild(el("h3", {}, pageNumber(p) + ". " + p.title));
         a.appendChild(el("p", {}, p.chapters.map(function (id) { return chapById[id].title; }).join(" · ")));
-        if (realChapters(p).length) a.appendChild(el("span", { "class": "stat", "data-home-count": p.id }));
+        if (realChapters(p).length) {
+          var ring = el("span", { "class": "ring", "data-ring": p.id, "aria-hidden": "true" });
+          a.appendChild(ring);
+          a.appendChild(el("span", { "class": "stat", "data-home-count": p.id }));
+        }
         map.appendChild(a);
       });
     }
@@ -422,10 +483,11 @@
       items.forEach(function (it, i) {
         var box = $("#" + uid + "q" + i), sel = form.querySelector("input[name=\"" + uid + "q" + i + "\"]:checked"), fb = $(".fb", box);
         box.classList.remove("right", "wrong");
+        $$("label", box).forEach(function (l, j) { l.classList.toggle("is-answer", false); });
         if (!sel) { fb.textContent = "Pas de réponse. " + it.e; return; }
         answered++;
         if (+sel.value === it.a) { ok++; box.classList.add("right"); fb.textContent = "Bonne réponse. " + it.e; }
-        else { box.classList.add("wrong"); fb.textContent = "Pas tout à fait. " + it.e; }
+        else { box.classList.add("wrong"); fb.textContent = "Pas tout à fait. " + it.e; $$("label", box)[it.a].classList.add("is-answer"); }
       });
       var msg = ok + " / " + items.length;
       if (answered < items.length) msg += " (" + (items.length - answered) + " sans réponse)";
@@ -636,6 +698,9 @@
   bindSearch();
   autoTerms();
   bindTerms();
+  buildReadBar();
+  buildCopy();
+  buildAnchors();
   buildQuizzes();
   buildGlossary();
   buildCheat();
