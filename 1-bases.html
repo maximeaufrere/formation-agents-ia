@@ -107,7 +107,7 @@
         <h3>Apprendre sans réentraîner : l'apprentissage en contexte</h3>
         <p>Quand tu donnes deux exemples dans ton prompt, le modèle imite le schéma sans qu'aucun poids ne change : c'est l'<i>apprentissage en contexte</i>. Tout le travail d'un agent (consignes, outils, documents) repose sur ce mécanisme : on <b>configure</b> le comportement en écrivant du texte, pas en entraînant.</p>
         <h3>Les modèles « à raisonnement »</h3>
-        <p>Certains modèles produisent d'abord une longue réflexion intermédiaire (« extended thinking ») avant de répondre. Ils consomment plus de tokens et mettent plus de temps, mais réussissent mieux les problèmes complexes (maths, code, planification). On règle souvent un « budget de réflexion ».</p>
+        <p>Certains modèles produisent d'abord une longue réflexion intermédiaire avant de répondre. Ils consomment plus de tokens et mettent plus de temps, mais réussissent mieux les problèmes complexes (maths, code, planification). Sur les modèles Claude récents, le modèle décide lui-même de la quantité de réflexion (réflexion adaptative) et on la règle avec le paramètre <code>effort</code> ; l'ancien « budget de réflexion » en tokens (<code>budget_tokens</code>) n'est plus accepté à partir de Claude 4.7.</p>
         <h3>Choisir un modèle</h3>
         <p>Les fournisseurs proposent des tailles : petits modèles (rapides, peu chers, parfaits pour classer ou extraire), modèles moyens (équilibre), grands modèles (raisonnement difficile, agents longs). Réflexe : prototyper avec un grand modèle, puis tester si un plus petit suffit.</p>
       </div>
@@ -120,7 +120,7 @@
         <ul class="clean">
           <li><b>Architecture Transformer.</b> Chaque couche combine une <i>auto-attention</i> (pondère l'importance des tokens précédents pour chaque position) et un perceptron (transformation non linéaire).</li>
           <li><b>Coût de l'attention.</b> Il croît environ de façon quadratique avec la longueur du contexte. Les implémentations utilisent un <b>cache KV</b> (clés/valeurs déjà calculées) pour ne pas tout recalculer à chaque token généré ; ce cache occupe de la mémoire GPU proportionnelle au contexte.</li>
-          <li><b>Échantillonnage.</b> Température (aplatit ou accentue la distribution), <i>top-p</i> (ne garde que les tokens dont la probabilité cumulée atteint p), <i>top-k</i>. Température proche de 0 = quasi déterministe, sans garantie stricte à cause du calcul parallèle sur GPU.</li>
+          <li><b>Échantillonnage.</b> Température (aplatit ou accentue la distribution), <i>top-p</i> (ne garde que les tokens dont la probabilité cumulée atteint p), <i>top-k</i> (ces trois réglages ne sont plus acceptés par les modèles Claude récents, voir c4). Température proche de 0 = quasi déterministe, sans garantie stricte à cause du calcul parallèle sur GPU.</li>
           <li><b>Lois d'échelle.</b> La perte diminue de façon régulière quand on augmente données, paramètres et calcul. Les progrès récents viennent aussi du post-entraînement par renforcement sur des tâches vérifiables (code qui passe des tests, problèmes mathématiques), qui rend les modèles bien meilleurs en comportement d'agent.</li>
         </ul>
         <div class="callout deep">
@@ -146,7 +146,7 @@
       <p class="goal">Comprendre pourquoi un LLM « oublie », ce que ça coûte, et comment le contexte se remplit.</p>
 
       <div class="lvl" data-lvl="1">
-        <p>Un LLM ne lit pas des lettres ni des mots entiers, mais des <code>tokens</code> : des morceaux de texte, souvent de 2 à 4 caractères. En français, compte environ <b>1 token pour ¾ de mot</b>. Un mot long ou rare est découpé en plusieurs morceaux.</p>
+        <p>Un LLM ne lit pas des lettres ni des mots entiers, mais des <code>tokens</code> : des morceaux de texte, souvent de 2 à 4 caractères. Compte grossièrement <b>1 token pour ½ à ¾ de mot</b> selon le modèle (environ 0,55 mot par token avec le tokenizer des modèles Claude récents) ; le français en consomme davantage que l'anglais. Mesure toujours avec l'outil de comptage de tokens du modèle visé. Un mot long ou rare est découpé en plusieurs morceaux.</p>
         <div class="demo" id="demo-tokens">
           <span class="demo-label">Démo 1 · Découper un texte en tokens</span>
           <label for="tok-in">Écris ou colle un texte :</label>
@@ -188,7 +188,7 @@
         <h3>Tokenisation par BPE</h3>
         <p>Le <i>Byte-Pair Encoding</i> part des octets (ou caractères), compte les paires adjacentes les plus fréquentes dans un corpus, les fusionne en un nouveau symbole, et répète jusqu'à atteindre la taille de vocabulaire voulue (quelques dizaines à centaines de milliers de tokens). Conséquences pratiques : l'arithmétique sur de longs nombres, l'orthographe lettre à lettre et les anagrammes sont difficiles pour un modèle qui ne voit pas les lettres, mais des morceaux.</p>
         <h3>Prompt caching</h3>
-        <p>Les fournisseurs peuvent mémoriser le calcul interne (cache KV) d'un <b>préfixe</b> de prompt identique d'un appel à l'autre. Une lecture depuis le cache coûte une fraction du prix normal (de l'ordre de 10 %) et réduit la latence ; l'écriture initiale coûte un peu plus, et le cache expire après quelques minutes sans usage. Règle de conception : <b>placer le contenu stable en tête</b> (consignes système, définitions d'outils, documents de référence) et le contenu variable à la fin. Modifier un seul caractère au début invalide tout le cache derrière lui.</p>
+        <p>Les fournisseurs peuvent mémoriser le calcul interne (cache KV) d'un <b>préfixe</b> de prompt identique d'un appel à l'autre. Une lecture depuis le cache coûte une fraction du prix normal (10 % du prix d'entrée de base pour la plupart des modèles, 5 % ou moins sur les modèles Claude les plus récents : vérifie la page de tarification) et réduit la latence ; l'écriture initiale coûte un peu plus, et le cache expire après quelques minutes sans usage. Règle de conception : <b>placer le contenu stable en tête</b> (consignes système, définitions d'outils, documents de référence) et le contenu variable à la fin. Modifier un seul caractère au début invalide tout le cache derrière lui.</p>
         <h3>Qualité en contexte long</h3>
         <ul class="clean">
           <li>La capacité à retrouver une information dans un contexte long n'est pas uniforme : l'information située au milieu est souvent moins bien exploitée (<i>lost in the middle</i>).</li>
@@ -203,7 +203,7 @@
       <div class="callout key retenir">
         <b>À retenir</b>
         <ul class="clean">
-          <li>Le modèle lit des tokens (environ ¾ de mot) ; la fenêtre de contexte est tout ce qu'il a sous les yeux, réponse comprise.</li>
+          <li>Le modèle lit des tokens (environ ½ à ¾ de mot) ; la fenêtre de contexte est tout ce qu'il a sous les yeux, réponse comprise.</li>
           <li>Pas de mémoire entre deux conversations par défaut.</li>
           <li>Le contexte d'un agent grossit à chaque tour : coût et qualité en dépendent.</li>
           <li>Mets le contenu stable en tête de prompt : le cache réduit coût et latence.</li>
@@ -255,7 +255,7 @@
           <li><b>Expliquer le pourquoi :</b> « n'utilise pas de listes car le résultat sera lu à voix haute » fonctionne mieux qu'une interdiction sèche.</li>
           <li><b>Autoriser l'incertitude :</b> « si l'information n'est pas dans le document, réponds qu'elle est absente ».</li>
         </ul>
-        <p><b>Température :</b> basse pour des tâches factuelles et reproductibles, plus haute pour la créativité. Selon les modèles, certains réglages sont gérés par le fournisseur : consulte la documentation du modèle utilisé.</p>
+        <p><b>Température :</b> sur de nombreux modèles, une température basse donne des réponses plus reproductibles et une température plus haute plus de variété. Mais les modèles Claude récents (4.7 et suivants) n'acceptent plus les paramètres <code>temperature</code>, <code>top_p</code> et <code>top_k</code> (erreur 400) : on oriente alors le style et la variabilité par le prompt. Consulte la documentation du modèle utilisé.</p>
       </div>
 
       <div class="lvl" data-lvl="3">
@@ -281,7 +281,7 @@ print(msg.usage.input_tokens, msg.usage.output_tokens)   # mesurer le coût</cod
           <li><b>Jeu d'évaluation.</b> Constitue 20 à 100 cas représentatifs (dont des cas pièges) avec le résultat attendu. Toute modification de prompt se juge sur ce jeu, pas sur trois essais à la main.</li>
           <li><b>Sorties structurées.</b> Quand un programme consomme la réponse, impose un schéma JSON (fonctionnalité de sortie structurée ou appel d'outil dont les paramètres sont le schéma) et valide-le côté code. Ne parse jamais du texte libre en production.</li>
           <li><b>Séparation instructions/données.</b> Tout contenu externe est placé dans des balises dédiées et déclaré comme données : première défense, imparfaite, contre l'injection de prompt (chapitre <a href="4-multi-securite-prod.html#c13">13</a>).</li>
-          <li><b>Déterminisme.</b> Même à température minimale, deux appels peuvent différer légèrement. Conçois les tests avec des critères (« contient la décision X ») plutôt qu'avec une égalité de chaînes.</li>
+          <li><b>Déterminisme.</b> Même quand le réglage de température existe, deux appels peuvent différer légèrement ; sur les modèles Claude récents, tu ne peux de toute façon pas la fixer. Conçois les tests avec des critères (« contient la décision X ») plutôt qu'avec une égalité de chaînes.</li>
           <li><b>Versionnage.</b> Les prompts sont du code : dans Git, relus, liés à des évaluations, déployés progressivement. Un changement de modèle impose de relancer les évaluations.</li>
         </ul>
         <div class="callout deep">
