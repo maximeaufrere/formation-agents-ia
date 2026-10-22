@@ -145,7 +145,7 @@
 
       <div class="lvl" data-lvl="3">
         <h3>Sous le capot : JSON-RPC 2.0</h3>
-        <p>MCP échange des messages JSON-RPC. Après une phase d'initialisation (négociation de version et de capacités), l'hôte liste puis appelle les outils :</p>
+        <p>MCP échange des messages JSON-RPC. Dans la révision actuelle de la spécification (2026-07-28), il n'y a plus de poignée de main d'initialisation : chaque requête porte elle-même la version du protocole et les capacités du client, et le serveur l'accepte ou la refuse indépendamment (les anciennes révisions, jusqu'à 2025-11-25, négociaient version et capacités dans une phase <code>initialize</code>). L'hôte liste puis appelle les outils (les champs <code>_meta</code> de chaque requête sont omis ici par brièveté) :</p>
 <pre class="code"><code>→ {"jsonrpc":"2.0","id":1,"method":"tools/list"}
 ← {"jsonrpc":"2.0","id":1,"result":{"tools":[
      {"name":"chercher_salles","description":"Liste les salles libres",
@@ -170,7 +170,7 @@ if __name__ == "__main__":
         <p>La docstring et les annotations de type deviennent automatiquement la description et le schéma de l'outil.</p>
         <h3>Risques et coûts propres à MCP</h3>
         <ul class="clean">
-          <li><b>Coût en contexte :</b> les définitions de tous les outils de tous les serveurs connectés sont injectées dans le contexte. Dix serveurs bavards peuvent consommer des dizaines de milliers de tokens avant le premier message. Active seulement ce dont tu as besoin.</li>
+          <li><b>Coût en contexte :</b> par défaut, un hôte injecte dans le contexte la définition de chaque outil de chaque serveur connecté. Claude Code limite ce coût grâce à la recherche d'outils (activée par défaut) : seuls les noms d'outils sont chargés au démarrage et les définitions complètes sont récupérées à la demande. Sans ce mécanisme, ou dans un autre hôte, beaucoup de serveurs bavards peuvent consommer une part importante du contexte avant le premier message. Active seulement ce dont tu as besoin.</li>
           <li><b>Chaîne d'approvisionnement :</b> un serveur MCP est du code exécuté avec tes droits : n'installe que des serveurs de confiance (chapitre <a href="4-multi-securite-prod.html#c13">13</a>).</li>
           <li><b>Empoisonnement d'outil :</b> la <i>description</i> d'un outil est lue par le modèle. Une description malveillante peut contenir des instructions cachées. Même logique que l'injection de prompt.</li>
           <li><b>Portée des droits :</b> un jeton d'accès trop large donne à l'agent plus de pouvoir que nécessaire. Utilise des jetons à portée minimale, en lecture seule quand c'est possible.</li>
@@ -182,7 +182,7 @@ if __name__ == "__main__":
         <ul class="clean">
           <li>MCP est un standard ouvert pour brancher des outils et des données à une application d'IA.</li>
           <li>Un serveur expose des outils, des ressources et des prompts ; un client s'y connecte.</li>
-          <li>Les définitions d'outils coûtent du contexte : n'active que le nécessaire.</li>
+          <li>Les définitions d'outils peuvent coûter du contexte (Claude Code les charge à la demande) : n'active que le nécessaire.</li>
           <li>Un serveur MCP est du code exécuté avec tes droits : installe uniquement des sources de confiance.</li>
         </ul>
         <p>Suite : <a href="3-memoire-extensions.html#c11">Chapitre 11 · Skills : transmettre un savoir-faire</a></p>
@@ -221,7 +221,7 @@ description: Rédige un compte rendu de réunion selon la charte interne. À uti
         <div class="scroll-x"><table>
           <thead><tr><th>Couche</th><th>Contenu</th><th>Quand c'est chargé</th></tr></thead>
           <tbody>
-            <tr><td>1 · Métadonnées</td><td>Nom + description (quelques dizaines de tokens)</td><td>Toujours, au démarrage</td></tr>
+            <tr><td>1 · Métadonnées</td><td>Nom + description (environ 100 tokens par skill)</td><td>Toujours, au démarrage</td></tr>
             <tr><td>2 · Instructions</td><td>Corps de <code>SKILL.md</code></td><td>Quand la tâche correspond à la description</td></tr>
             <tr><td>3 · Ressources</td><td>Fichiers liés, modèles, scripts</td><td>Seulement si les instructions les demandent</td></tr>
           </tbody>
