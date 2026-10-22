@@ -154,7 +154,7 @@
           <li><b>Erreur irrécupérable</b> ou interruption par l'utilisateur.</li>
         </ul>
         <h3>Planification et auto-correction</h3>
-        <p>Pour les tâches longues, on demande à l'agent de tenir une <b>liste de tâches</b> (qu'il met à jour) et de <b>vérifier son travail</b> avant de conclure (relancer les tests, relire le résultat). Les agents qui se vérifient échouent beaucoup moins que ceux qui s'arrêtent à leur première tentative.</p>
+        <p>Pour les tâches longues, on demande à l'agent de tenir une <b>liste de tâches</b> (qu'il met à jour) et de <b>vérifier son travail</b> avant de conclure (relancer les tests, relire le résultat). Les agents qui se vérifient échouent souvent moins que ceux qui s'arrêtent à leur première tentative.</p>
       </div>
 
       <div class="lvl" data-lvl="3">
@@ -256,7 +256,7 @@ for tour in range(MAX_TOURS):                      # plafond dur : jamais de bou
           </tbody>
         </table></div>
         <ul class="clean">
-          <li><b>Hybride :</b> la plupart des systèmes robustes sont des workflows dans lesquels certaines étapes sont des agents bornés (budget, outils limités).</li>
+          <li><b>Hybride :</b> de nombreux systèmes robustes sont des workflows dans lesquels certaines étapes sont des agents bornés (budget, outils limités).</li>
           <li><b>Montée progressive :</b> démarre en workflow, mesure où il échoue faute de flexibilité, et n'ouvre l'autonomie que sur ces zones.</li>
           <li><b>Coût total :</b> compare le coût par tâche <i>réussie</i> (tokens + relectures humaines + reprises), pas seulement le coût par appel.</li>
         </ul>
