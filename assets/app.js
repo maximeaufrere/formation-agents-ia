@@ -66,16 +66,15 @@
     toc.appendChild(el("p", { "class": "progress-label", id: "plabel" }));
 
     var ctl = el("div", { "class": "lvl-ctl", role: "group", "aria-labelledby": "lvl-title" });
-    ctl.appendChild(el("p", { "class": "toc-title", id: "lvl-title" }, "Je veux lire :"));
+    ctl.appendChild(el("p", { "class": "toc-title", id: "lvl-title" }, "Ton niveau"));
     var opts = el("div", { "class": "lvl-opts" });
     LEVELS.forEach(function (l) {
-      var b = el("button", { type: "button", "class": "lvl-opt", "data-l": l.n, "aria-pressed": "false" });
-      b.appendChild(el("b", {}, l.name));
-      b.appendChild(el("span", {}, l.desc));
+      var b = el("button", { type: "button", "class": "lvl-opt", "data-l": l.n, "aria-pressed": "false", title: l.name }, String(l.n));
       b.addEventListener("click", function () { setLevel(l.n); });
       opts.appendChild(b);
     });
     ctl.appendChild(opts);
+    ctl.appendChild(el("p", { "class": "lvl-hint", id: "lvl-hint", "aria-live": "polite" }));
     toc.appendChild(ctl);
 
     var sw = el("div", { "class": "toc-search" });
@@ -182,10 +181,35 @@
     $$("section.chap").forEach(function (s) { io.observe(s); });
   }
 
+  /* ---------- barre de lecture et ancres de titres ---------- */
+  function buildReadBar() {
+    var bar = el("div", { "class": "readbar", "aria-hidden": "true" });
+    var i = el("i");
+    bar.appendChild(i);
+    document.body.appendChild(bar);
+    function upd() {
+      var h = document.documentElement.scrollHeight - window.innerHeight;
+      i.style.width = (h > 0 ? Math.min(100, 100 * window.scrollY / h) : 0) + "%";
+    }
+    window.addEventListener("scroll", upd, { passive: true });
+    upd();
+  }
+  function buildAnchors() {
+    $$("section.chap[id] h2, .lvl h3[id]").forEach(function (h) {
+      var sec = h.closest("section.chap");
+      var id = h.id || (sec && sec.id);
+      if (!id) return;
+      var a = el("a", { href: "#" + id, "class": "anchor", "aria-label": "Lien vers cette section" }, "#");
+      h.appendChild(a);
+    });
+  }
+
   /* ---------- niveau de lecture (clé « maxlvl » inchangée) ---------- */
   function setLevel(n) {
     document.body.setAttribute("data-maxlvl", n);
     $$(".lvl-opt").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.l === String(n)); });
+    var hint = $("#lvl-hint");
+    if (hint) hint.textContent = LEVELS[n - 1].name + " : " + LEVELS[n - 1].desc;
     store.set("maxlvl", String(n));
   }
 
@@ -636,6 +660,8 @@
   bindSearch();
   autoTerms();
   bindTerms();
+  buildReadBar();
+  buildAnchors();
   buildQuizzes();
   buildGlossary();
   buildCheat();
