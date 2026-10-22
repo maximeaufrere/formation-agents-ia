@@ -88,7 +88,7 @@ window.COURS = {
           "Une phrase"
         ],
         "a": 1,
-        "e": "En français, compte environ 1 token pour ¾ de mot. Les mots longs ou rares sont découpés en plusieurs morceaux."
+        "e": "Compte grossièrement 1 token pour ½ à ¾ de mot selon le modèle. Les mots longs ou rares sont découpés en plusieurs morceaux."
       },
       {
         "q": "Quel élément fixe le rôle, le ton et les règles d'une conversation ?",
@@ -327,7 +327,7 @@ window.COURS = {
       ["! commande", "Lance directement une commande shell", "c15"],
       ["Échap", "Interrompt Claude", "c15"],
       ["Échap deux fois", "Champ vide : ouvre le retour arrière (comme /rewind). Avec du texte : efface le brouillon", "c17"],
-      ["Maj+Tab", "Change de mode (par défaut, acceptation des éditions, plan)", "c17"]
+      ["Maj+Tab", "Change de mode : Manuel (config default), acceptation des éditions, plan, puis contournement des permissions et auto quand ils sont disponibles", "c17"]
     ],
     files: [
       ["~/.claude/CLAUDE.md", "Tes préférences, tous projets. Non partagé.", "c16"],
@@ -383,7 +383,7 @@ window.COURS = {
     ["Agent IA", "Un modèle, des outils, un contexte et une boucle qui lui permet de poursuivre un objectif en plusieurs étapes."],
     ["Agent SDK", "Bibliothèque (Python, TypeScript) qui expose la boucle et les outils de Claude Code pour construire ses propres agents."],
     ["Attention (auto-attention)", "Mécanisme d'un Transformer qui pondère l'importance des autres tokens du contexte pour chaque position."],
-    ["Bac à sable (sandbox)", "Environnement isolé où un agent peut agir sans risque pour les vrais systèmes (fichiers et réseau restreints)."],
+    ["Bac à sable (sandbox)", "Environnement isolé qui limite ce qu'un agent peut atteindre (fichiers et réseau restreints). Dans Claude Code, il est appliqué par le système d'exploitation autour des commandes shell uniquement : les outils de fichiers, les serveurs MCP et les hooks tournent hors du bac à sable."],
     ["BPE", "Byte-Pair Encoding : méthode de construction du vocabulaire de tokens par fusion des paires fréquentes."],
     ["Boucle agentique", "Cycle réfléchir – agir – observer répété jusqu'à ce que l'objectif soit atteint ou qu'une limite soit rencontrée."],
     ["Cache KV", "Mémorisation des clés et valeurs d'attention déjà calculées pour ne pas recalculer tout le contexte à chaque token."],
