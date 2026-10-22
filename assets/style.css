@@ -260,3 +260,14 @@ footer { margin-top: 64px; color: var(--muted); font-size: 0.9rem; }
 .retenir { margin-top: 28px; }
 .retenir ul { margin: 6px 0; }
 .retenir p { margin: 0.6em 0 0; font-size: 0.95rem; }
+
+/* accueil */
+.btn.cta { display: inline-block; text-decoration: none; margin-top: 20px; padding: 12px 22px; font-size: 1.05rem; border-radius: 10px; }
+.btn.cta:hover { filter: brightness(1.08); }
+.btn.cta[hidden] { display: none; }
+.hero-meta { font-size: 0.85rem; margin-top: 28px; }
+.home-card { transition: border-color .15s, transform .15s; position: relative; }
+.home-card:hover { transform: translateY(-2px); }
+.home-card .ring { position: absolute; top: 14px; right: 14px; width: 26px; height: 26px; border-radius: 50%; background: conic-gradient(var(--accent) var(--p, 0%), var(--line) 0); }
+.home-card .ring::after { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: var(--surface); }
+@media (prefers-reduced-motion: reduce) { .home-card { transition: none; } .home-card:hover { transform: none; } }

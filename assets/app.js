@@ -152,6 +152,10 @@
       b.setAttribute("aria-pressed", on);
       b.textContent = on ? "✓ Lu" : "Marquer comme lu";
     });
+    $$("[data-ring]").forEach(function (r) {
+      var ids = realChapters(pageById[r.dataset.ring]);
+      r.style.setProperty("--p", ids.length ? (100 * ids.filter(function (id) { return done[id]; }).length / ids.length) + "%" : "0%");
+    });
     $$("[data-home-count]").forEach(function (s) {
       var ids = realChapters(pageById[s.dataset.homeCount]);
       s.textContent = ids.filter(function (id) { return done[id]; }).length + " / " + ids.length + " chapitres lus";
@@ -175,6 +179,7 @@
       entries.forEach(function (e) {
         if (e.isIntersecting) {
           $$(".toc a[data-target]").forEach(function (a) { a.classList.toggle("active", a.dataset.target === e.target.id); });
+          store.set("last", e.target.id);
         }
       });
     }, { rootMargin: "-20% 0px -70% 0px" });
@@ -306,6 +311,19 @@
   /* ---------- accueil : parcours et carte des pages ---------- */
   function buildHome() {
     var paths = $("#home-paths"), map = $("#home-map");
+    var cta = $("#home-resume");
+    if (cta) {
+      var last = store.get("last"), target = null;
+      pages.forEach(function (p) { if (p.chapters.indexOf(last) !== -1) target = p; });
+      if (target && chapById[last]) {
+        cta.href = target.file + "#" + last;
+        cta.textContent = "Reprendre : " + chapById[last].title + " →";
+      } else {
+        cta.href = pages[1].file;
+        cta.textContent = "Commencer la formation →";
+      }
+      cta.hidden = false;
+    }
     if (paths) {
       D.paths.forEach(function (pa) {
         var first = pageById[pa.pages[0]];
@@ -325,7 +343,11 @@
         a.appendChild(el("span", { "class": "tag" }, D.parts[p.part]));
         a.appendChild(el("h3", {}, pageNumber(p) + ". " + p.title));
         a.appendChild(el("p", {}, p.chapters.map(function (id) { return chapById[id].title; }).join(" · ")));
-        if (realChapters(p).length) a.appendChild(el("span", { "class": "stat", "data-home-count": p.id }));
+        if (realChapters(p).length) {
+          var ring = el("span", { "class": "ring", "data-ring": p.id, "aria-hidden": "true" });
+          a.appendChild(ring);
+          a.appendChild(el("span", { "class": "stat", "data-home-count": p.id }));
+        }
         map.appendChild(a);
       });
     }
