@@ -121,7 +121,7 @@ asyncio.run(main())</code></pre>
         </div>
         <h3>Cinq réflexes</h3>
         <ul class="clean">
-          <li><b>Donne-lui un moyen de vérifier</b> (tests, commande de build, capture d'écran attendue). C'est le conseil le plus rentable.</li>
+          <li><b>Donne-lui un moyen de vérifier</b> (tests, commande de build, capture d'écran attendue). C'est un conseil particulièrement utile.</li>
           <li><b>Sois précis</b> : fichiers concernés, comportement attendu, exemple.</li>
           <li><b>Petits pas :</b> une tâche à la fois, un commit par étape.</li>
           <li><b><code>/clear</code> entre deux tâches sans rapport</b> pour repartir avec un contexte propre.</li>
@@ -156,7 +156,7 @@ asyncio.run(main())</code></pre>
         <h3>Principes d'expert</h3>
         <ul class="clean">
           <li><b>Investis dans le harnais, pas seulement dans le prompt.</b> La qualité vient de l'environnement : tests rapides et fiables, linter, typage, CLAUDE.md concis, hooks de vérification, commandes d'amorçage. Un projet bien outillé multiplie l'efficacité de l'agent.</li>
-          <li><b>Séparer l'auteur et le relecteur.</b> Une seconde session (ou un sous-agent) au contexte vierge relit le diff : elle n'est pas biaisée par le raisonnement de l'auteur et repère plus d'erreurs. Variante : une session écrit les tests, une autre le code.</li>
+          <li><b>Séparer l'auteur et le relecteur.</b> Une seconde session (ou un sous-agent) au contexte vierge relit le diff : elle n'est pas biaisée par le raisonnement de l'auteur, ce qui améliore la relecture. Variante : une session écrit les tests, une autre le code.</li>
           <li><b>Spécifier l'intention, pas la procédure.</b> Décris le résultat et les contraintes ; laisse l'agent choisir les étapes. Excès de micro-gestion = perte de ses capacités d'adaptation.</li>
           <li><b>Mesurer.</b> Suis le taux de changements acceptés sans reprise, le temps de cycle, le coût par tâche. Compare les approches (avec/sans plan, avec/sans sous-agent) sur vos propres tâches.</li>
           <li><b>Capitaliser.</b> Chaque erreur répétée devient soit une ligne de CLAUDE.md, soit un hook, soit une commande/skill. L'équipe progresse collectivement.</li>
