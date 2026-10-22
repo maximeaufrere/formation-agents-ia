@@ -44,7 +44,10 @@ h1, h2, h3, h4 { font-family: var(--display); line-height: 1.15; text-wrap: bala
 h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); font-weight: 700; letter-spacing: -0.02em; }
 h2 { font-size: clamp(1.6rem, 3.2vw, 2.1rem); font-weight: 700; letter-spacing: -0.01em; }
 h3 { font-size: 1.2rem; font-weight: 700; margin-top: 1.6rem; }
-p { margin: 0.8em 0; max-width: 68ch; }
+p { margin: 1em 0; max-width: 66ch; }
+.lvl p, .lvl li { line-height: 1.7; }
+.lvl[data-lvl="2"], .lvl[data-lvl="3"] { background: color-mix(in srgb, var(--lc) 6%, transparent); padding: 12px 18px 14px; border-radius: 0 10px 10px 0; }
+.lvl h3 { margin-top: 1.9rem; margin-bottom: 0.2rem; }
 a { color: var(--accent); }
 code, .mono { font-family: var(--mono); font-size: 0.86em; background: var(--surface-2); padding: 0.1em 0.35em; border-radius: 4px; }
 pre.code { overflow-x: auto; background: var(--surface-2); padding: 12px 14px; border-radius: 8px; margin: 14px 0; font-family: var(--mono); font-size: 0.82rem; line-height: 1.5; max-width: 100%; }
@@ -93,7 +96,7 @@ button { font: inherit; cursor: pointer; }
 .theme-btn { margin-left: auto; background: none; border: 1px solid var(--line); color: var(--fg); border-radius: 6px; padding: 4px 10px; font-size: 0.85rem; }
 
 /* sections */
-section.chap { padding: 56px 0 8px; border-top: 1px solid var(--line); margin-top: 48px; scroll-margin-top: 16px; }
+section.chap { padding: 64px 0 16px; border-top: 2px solid var(--line); margin-top: 64px; scroll-margin-top: 16px; }
 section.chap:first-of-type { margin-top: 32px; }
 .part-banner { font-family: var(--display); font-size: clamp(1.2rem, 2.4vw, 1.5rem); color: var(--accent); margin: 0 0 22px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); max-width: 68ch; }
 .chap-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; }
@@ -101,7 +104,7 @@ section.chap:first-of-type { margin-top: 32px; }
 .goal { color: var(--muted); font-style: italic; margin-top: 4px; }
 
 /* niveaux d'explication */
-.lvl { --lc: var(--accent); margin: 26px 0; padding: 2px 0 2px 18px; border-left: 4px solid var(--lc); }
+.lvl { --lc: var(--accent); margin: 32px 0; padding: 2px 0 2px 18px; border-left: 4px solid var(--lc); }
 .lvl[data-lvl="2"] { --lc: var(--warn); }
 .lvl[data-lvl="3"] { --lc: var(--l3); }
 .lvl::before { display: inline-block; font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--lc); border: 1px solid var(--lc); border-radius: 4px; padding: 2px 8px; margin-bottom: 4px; }

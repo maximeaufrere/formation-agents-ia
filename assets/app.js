@@ -7,10 +7,23 @@
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  /* En file://, certains navigateurs (Firefox) isolent localStorage par fichier : la progression d'une page disparaît sur la suivante.
+     On double donc chaque écriture dans window.name, qui survit à la navigation dans le même onglet. */
+  var mirror = {};
+  try { var parsed = JSON.parse(window.name); if (parsed && parsed.cours) mirror = parsed.cours; } catch (e) {}
   var store = {
-    get: function (k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } },
-    set: function (k, v) { try { window.localStorage.setItem(k, v); } catch (e) {} }
+    get: function (k) {
+      var v = null;
+      try { v = window.localStorage.getItem(k); } catch (e) {}
+      return v != null ? v : (k in mirror ? mirror[k] : null);
+    },
+    set: function (k, v) {
+      try { window.localStorage.setItem(k, v); } catch (e) {}
+      mirror[k] = v;
+      try { window.name = JSON.stringify({ cours: mirror }); } catch (e) {}
+    }
   };
+  Object.keys(mirror).forEach(function (k) { try { if (window.localStorage.getItem(k) == null) window.localStorage.setItem(k, mirror[k]); } catch (e) {} });
   function el(tag, attrs, text) {
     var n = document.createElement(tag);
     Object.keys(attrs || {}).forEach(function (k) { n.setAttribute(k, attrs[k]); });
