@@ -42,7 +42,7 @@
 <pre class="code"><code>cd mon-projet
 claude                      # démarre une session interactive
 &gt; Explique-moi l'architecture de ce projet</code></pre>
-        <p>À la première utilisation, il te propose de te connecter (compte Claude ou clé d'API d'organisation). L'installation exacte évolue : suis la documentation officielle de Claude Code.</p>
+        <p>À la première utilisation, il te propose de te connecter (abonnement Claude ou compte Console Anthropic ; une clé d'API fournie par la variable ANTHROPIC_API_KEY ou un fournisseur cloud sont d'autres options). L'installation exacte évolue : suis la documentation officielle de Claude Code.</p>
         <div class="demo" id="demo-cc">
           <span class="demo-label">Démo 3 · Une session Claude Code, pas à pas</span>
           <p style="margin-top:0"><b>Demande :</b> « Le test <code>test_total</code> échoue, corrige-le. »</p>
@@ -97,7 +97,7 @@ claude                      # démarre une session interactive
         <ul class="clean">
           <li><b>Le moteur de permissions</b> se place entre le modèle et l'exécution : chaque appel d'outil passe par les règles <i>allow/ask/deny</i>, le mode courant et d'éventuels hooks (chapitres <a href="5-cc-prise-en-main.html#c17">17</a> et <a href="6-cc-extensions.html#c19">19</a>).</li>
           <li><b>Gestion automatique du contexte :</b> quand la fenêtre approche de sa limite, la conversation est compactée. Tu peux aussi déclencher <code>/compact</code> avec des instructions sur ce qu'il faut conserver.</li>
-          <li><b>Prompt caching :</b> le préfixe stable (système, outils, CLAUDE.md) est mis en cache, ce qui réduit coût et latence des tours successifs. Modifier CLAUDE.md ou la liste des outils en cours de session peut invalider ce cache.</li>
+          <li><b>Prompt caching :</b> le préfixe stable (prompt système, définitions d'outils, puis CLAUDE.md et mémoire) est mis en cache, ce qui réduit coût et latence des tours successifs. Changer la liste des outils en cours de session (par exemple connecter un serveur MCP) ou changer de modèle peut invalider ce cache. Modifier CLAUDE.md en cours de session n'invalide pas le cache, mais n'est pas pris en compte avant le prochain /clear, /compact ou redémarrage.</li>
           <li><b>Authentification et déploiement :</b> compte Claude (abonnement), clé d'API Anthropic, ou fournisseurs cloud (Amazon Bedrock, Google Cloud, Microsoft Foundry) pour les entreprises qui imposent leur cloud.</li>
           <li><b>Extensibilité :</b> la même boucle se pilote par code (mode non interactif, SDK, chapitre <a href="7-cc-automatiser.html#c21">21</a>), s'étend par MCP (chapitre <a href="6-cc-extensions.html#c20">20</a>), skills et sous-agents (chapitre <a href="6-cc-extensions.html#c18">18</a>), hooks (chapitre <a href="6-cc-extensions.html#c19">19</a>).</li>
           <li><b>Télémétrie d'équipe :</b> des métriques d'usage et de coût peuvent être exportées (par exemple au format OpenTelemetry) pour piloter l'adoption et le budget.</li>
@@ -206,11 +206,11 @@ claude                      # démarre une session interactive
       <p class="goal">Contrôler ce que Claude Code a le droit de faire, et pouvoir annuler.</p>
 
       <div class="lvl" data-lvl="1">
-        <p>Par défaut, Claude Code <b>demande ton accord</b> avant de modifier un fichier ou d'exécuter une commande. Il peut lire librement, mais il ne change rien sans validation. Tu choisis, pour chaque demande, d'accepter, de refuser, ou d'autoriser ce type d'action pour la suite.</p>
+        <p>Le comportement au démarrage dépend de ta version et de ta configuration : avec les versions récentes de Claude Code (2.1.283 et plus), une session interactive démarre en mode <b>auto</b>, où un classificateur examine les actions à ta place. En mode Manuel (<code>default</code>), Claude Code <b>demande ton accord</b> avant de modifier un fichier ou d'exécuter une commande. Il peut lire librement les fichiers du dossier de travail, mais il ne change rien sans validation. Tu peux choisir le mode au démarrage avec <code>--permission-mode</code> ou via <code>permissions.defaultMode</code>. Tu choisis, pour chaque demande, d'accepter, de refuser, ou d'autoriser ce type d'action pour la suite.</p>
         <h3>Les modes</h3>
         <div class="cols">
-          <div class="card"><span class="tag">Par défaut</span><h4>Demande avant d'agir</h4><p>Le plus prudent pour débuter.</p></div>
-          <div class="card"><span class="tag">Acceptation des éditions</span><h4>Modifie sans demander</h4><p>Les éditions de fichiers passent seules. Les commandes sensibles restent soumises à validation.</p></div>
+          <div class="card"><span class="tag">Manuel (<code>default</code>)</span><h4>Demande avant d'agir</h4><p>Demande avant la plupart des éditions, commandes shell et accès réseau. À choisir explicitement si tu veux ce niveau de prudence.</p></div>
+          <div class="card"><span class="tag">Acceptation des éditions</span><h4>Modifie sans demander</h4><p>Les éditions de fichiers et certaines commandes courantes du système de fichiers (mkdir, touch, rm, rmdir, mv, cp, sed) passent seules dans le dossier du projet. Les autres commandes Bash et tout ce qui sort du périmètre restent soumis à validation.</p></div>
           <div class="card"><span class="tag">Plan</span><h4>Réfléchit, ne touche à rien</h4><p>Explore le code et propose un plan que tu valides avant toute modification.</p></div>
         </div>
         <p>On change de mode en cours de session avec le raccourci <code>Maj+Tab</code>, ou on démarre dans un mode avec <code>--permission-mode</code>. Deux autres modes existent : <b>auto</b> (un classificateur examine les actions à ta place) et <b>dontAsk</b> (refuse tout ce qui demanderait une validation). Il existe aussi un mode qui contourne toutes les permissions : à réserver à des environnements jetables et isolés (voir niveau 3).</p>
@@ -264,7 +264,7 @@ claude                      # démarre une session interactive
       <div class="callout key retenir">
         <b>À retenir</b>
         <ul class="clean">
-          <li>Par défaut, Claude Code demande avant de modifier un fichier ou d'exécuter une commande.</li>
+          <li>En mode Manuel, Claude Code demande avant de modifier un fichier ou d'exécuter une commande ; selon ta version, une session peut démarrer en mode auto (vérifie le mode affiché dans la barre d'état).</li>
           <li>Pour une tâche non triviale, commence en mode plan (<code>Maj+Tab</code>).</li>
           <li>Règles allow, ask, deny dans les réglages ; deny l'emporte toujours.</li>
           <li>Les permissions décident si on demande ; le bac à sable décide ce qui est techniquement possible.</li>
