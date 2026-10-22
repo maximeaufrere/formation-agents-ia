@@ -41,3 +41,13 @@ _Avoid_: orchestrateur-exécutants, chef et exécutants
 **Évaluateur-optimiseur**:
 Schéma où un agent produit, un autre critique, et l'on itère. Le « débat » en est une variante.
 _Avoid_: critique, débat (comme schéma à part)
+
+## Vérification
+
+**Finding**:
+Constat de vérification sur une affirmation du support : citation, verdict, source primaire avec URL, correction proposée.
+_Avoid_: erreur, bug, remarque
+
+**Verdict**:
+Conclusion d'un finding. Quatre valeurs : exact, obsolète, faux, non vérifiable.
+_Avoid_: statut, note
