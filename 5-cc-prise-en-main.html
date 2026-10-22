@@ -176,7 +176,7 @@ claude                      # démarre une session interactive
       <div class="lvl" data-lvl="3">
         <h3>CLAUDE.md est du contexte, pas du code</h3>
         <ul class="clean">
-          <li><b>Il coûte des tokens à chaque session</b>, et chaque ligne concurrence l'attention du modèle. Un CLAUDE.md de 500 lignes est moins bien suivi qu'un de 60 ; la documentation vise moins de 200 lignes par fichier. Élague régulièrement.</li>
+          <li><b>Il coûte des tokens à chaque session</b>, et chaque ligne concurrence l'attention du modèle. Un long CLAUDE.md (500 lignes, par exemple) est souvent moins bien suivi qu'un court (60) ; la documentation vise moins de 200 lignes par fichier. Élague régulièrement.</li>
           <li><b>Aucune garantie d'application.</b> C'est une consigne que le modèle suit « le plus souvent ». Pour une règle qui doit être respectée <i>sans exception</i> (formater après chaque édition, interdire une commande), utilise un <b>hook</b> (chapitre <a href="6-cc-extensions.html#c19">19</a>) ou une règle de permission (chapitre <a href="5-cc-prise-en-main.html#c17">17</a>).</li>
           <li><b>Formulation :</b> des consignes concrètes et testables (« exécute <code>npm run lint</code> avant de conclure ») fonctionnent mieux que des principes vagues (« écris du code propre »).</li>
           <li><b>Emphase :</b> si une règle critique est ignorée, reformule-la et place-la plus haut plutôt que d'empiler des majuscules.</li>
@@ -251,7 +251,7 @@ claude                      # démarre une session interactive
           <li><b>Granularité par outil :</b> les outils MCP s'adressent par nom (<code>mcp__serveur__outil</code>), ce qui permet d'autoriser la lecture d'un serveur et d'interdire son écriture.</li>
         </ul>
         <h3>Sandbox : isoler pour de bon</h3>
-        <p>Les permissions décident <i>si on demande</i>. Le <b>bac à sable</b> décide <i>ce qui est techniquement possible</i> : Claude Code peut exécuter ses commandes dans un environnement restreint au niveau du système d'exploitation, avec accès limité au système de fichiers (le projet seulement) et au réseau (domaines autorisés). Même une injection de prompt réussie reste alors cantonnée.</p>
+        <p>Les permissions décident <i>si on demande</i>. Le <b>bac à sable</b> décide <i>ce qui est techniquement possible</i> : Claude Code peut exécuter ses commandes dans un environnement restreint au niveau du système d'exploitation, avec accès limité au système de fichiers (le projet seulement) et au réseau (domaines autorisés). Une injection de prompt réussie voit alors son champ d'action fortement réduit pour les commandes shell (les autres outils, comme les outils de fichiers, les serveurs MCP et les hooks, restent hors du bac à sable).</p>
         <h3>Le mode « contourner les permissions »</h3>
         <p>L'option <code>--dangerously-skip-permissions</code> supprime toutes les validations. Son nom est volontairement dissuasif. Usage raisonnable : uniquement dans un conteneur ou une machine virtuelle <b>jetable</b>, sans accès à des secrets ni à un réseau ouvert, pour des tâches automatisées bornées. Jamais sur ton poste avec tes identifiants.</p>
         <h3>Autres points de vigilance</h3>
