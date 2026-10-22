@@ -75,7 +75,7 @@
 
       <div class="lvl" data-lvl="3">
         <h3>Embeddings et similarité</h3>
-        <p>La proximité de deux vecteurs <b>a</b> et <b>b</b> se mesure souvent par la similarité cosinus : <code>cos(a, b) = (a · b) / (‖a‖ ‖b‖)</code>, proche de 1 quand les sens sont voisins. Les bases vectorielles utilisent des index approchés (HNSW, IVF) pour chercher parmi des millions de vecteurs en quelques millisecondes, au prix d'un rappel légèrement inférieur à 100 %.</p>
+        <p>La proximité de deux vecteurs <b>a</b> et <b>b</b> se mesure souvent par la similarité cosinus : <code>cos(a, b) = (a · b) / (‖a‖ ‖b‖)</code>, proche de 1 quand les sens sont voisins. Les bases vectorielles utilisent des index approchés (HNSW, IVF) pour chercher rapidement parmi de très nombreux vecteurs, au prix d'un rappel légèrement inférieur à 100 %.</p>
         <h3>Ce qui fait réussir ou échouer un RAG</h3>
         <ul class="clean">
           <li><b>La qualité de la récupération prime.</b> Si le bon passage n'est pas dans les k résultats, le meilleur modèle ne peut rien. Mesure le <i>rappel@k</i> sur un jeu de questions avec réponses connues, avant de toucher au prompt de génération.</li>
@@ -109,7 +109,7 @@
 
       <div class="lvl" data-lvl="1">
         <p>Chaque outil (agenda, messagerie, base de données, ticketing) a sa propre interface. Sans standard, il faudrait écrire une intégration sur mesure pour chaque couple « application d'IA × outil ».</p>
-        <p>Le <code>MCP</code> (<i>Model Context Protocol</i>) est un protocole ouvert, lancé par Anthropic et repris par une bonne partie du secteur. Il définit une façon commune de décrire et d'appeler des outils et des sources de données.</p>
+        <p>Le <code>MCP</code> (<i>Model Context Protocol</i>) est un protocole ouvert, lancé par Anthropic et repris par d'autres acteurs du secteur. Il définit une façon commune de décrire et d'appeler des outils et des sources de données.</p>
         <div class="callout analogy">
           <b>Analogie : la prise USB-C</b>
           <p>Avant l'USB-C, chaque appareil avait son chargeur. Avec une prise commune, n'importe quel appareil se branche sur n'importe quel port. Avec MCP, un <b>serveur MCP</b> (par exemple celui de ton outil de tickets) se branche à tout <b>client MCP</b> (un assistant, un agent, un éditeur de code).</p>
@@ -172,9 +172,9 @@ if __name__ == "__main__":
         <ul class="clean">
           <li><b>Coût en contexte :</b> par défaut, un hôte injecte dans le contexte la définition de chaque outil de chaque serveur connecté. Claude Code limite ce coût grâce à la recherche d'outils (activée par défaut) : seuls les noms d'outils sont chargés au démarrage et les définitions complètes sont récupérées à la demande. Sans ce mécanisme, ou dans un autre hôte, beaucoup de serveurs bavards peuvent consommer une part importante du contexte avant le premier message. Active seulement ce dont tu as besoin.</li>
           <li><b>Chaîne d'approvisionnement :</b> un serveur MCP est du code exécuté avec tes droits : n'installe que des serveurs de confiance (chapitre <a href="4-multi-securite-prod.html#c13">13</a>).</li>
-          <li><b>Empoisonnement d'outil :</b> la <i>description</i> d'un outil est lue par le modèle. Une description malveillante peut contenir des instructions cachées. Même logique que l'injection de prompt.</li>
+          <li><b>Empoisonnement d'outil :</b> la <i>description</i> d'un outil est lue par le modèle. Une description malveillante peut contenir des instructions cachées. Même logique que l'injection de prompt (<i>tool poisoning</i> est un terme de la communauté sécurité, pas de la spécification).</li>
           <li><b>Portée des droits :</b> un jeton d'accès trop large donne à l'agent plus de pouvoir que nécessaire. Utilise des jetons à portée minimale, en lecture seule quand c'est possible.</li>
-          <li><b>Combinaison dangereuse :</b> un serveur qui lit des données privées + un autre qui lit du contenu public non fiable + un troisième qui peut envoyer vers l'extérieur forment la « triade létale » (chapitre <a href="4-multi-securite-prod.html#c13">13</a>).</li>
+          <li><b>Combinaison dangereuse :</b> un serveur qui lit des données privées + un autre qui lit du contenu public non fiable + un troisième qui peut envoyer vers l'extérieur forment ce que Simon Willison appelle la « triade létale » (chapitre <a href="4-multi-securite-prod.html#c13">13</a>).</li>
         </ul>
       </div>
       <div class="callout key retenir">
