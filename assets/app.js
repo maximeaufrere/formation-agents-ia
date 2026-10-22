@@ -87,8 +87,6 @@
     sw.appendChild(el("ul", { id: "s-res", hidden: "" }));
     toc.appendChild(sw);
 
-    var toggle = el("button", { "class": "toc-toggle", id: "toc-toggle", type: "button", "aria-expanded": "false", "aria-controls": "toc-list" }, "Afficher le sommaire");
-    toc.appendChild(toggle);
 
     var list = el("ol", { id: "toc-list" });
     var lastPart = null;
@@ -125,17 +123,24 @@
     var tb = el("button", { "class": "theme-btn side", id: "theme-btn", type: "button" });
     toc.appendChild(tb);
 
-    toggle.addEventListener("click", function () {
-      var open = toc.classList.toggle("open");
+    toc.id = toc.id || "toc";
+    var bar = el("div", { "class": "toc-bar" });
+    var toggle = el("button", { "class": "toc-toggle", type: "button", "aria-expanded": "false", "aria-controls": toc.id }, "☰ Sommaire");
+    bar.appendChild(toggle);
+    var backdrop = el("div", { "class": "toc-backdrop", hidden: "" });
+    document.body.appendChild(bar);
+    document.body.appendChild(backdrop);
+    function setOpen(open) {
+      toc.classList.toggle("open", open);
+      backdrop.hidden = !open;
+      document.body.classList.toggle("toc-lock", open);
       toggle.setAttribute("aria-expanded", open);
-      toggle.textContent = open ? "Masquer le sommaire" : "Afficher le sommaire";
-    });
-    list.addEventListener("click", function (e) {
-      if (e.target.closest("a[data-target]") && window.matchMedia("(max-width: 899px)").matches) {
-        toc.classList.remove("open");
-        toggle.setAttribute("aria-expanded", "false");
-        toggle.textContent = "Afficher le sommaire";
-      }
+    }
+    toggle.addEventListener("click", function () { setOpen(!toc.classList.contains("open")); });
+    backdrop.addEventListener("click", function () { setOpen(false); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && toc.classList.contains("open")) { setOpen(false); toggle.focus(); } });
+    toc.addEventListener("click", function (e) {
+      if (e.target.closest("a") && window.matchMedia("(max-width: 899px)").matches) setOpen(false);
     });
   }
 
