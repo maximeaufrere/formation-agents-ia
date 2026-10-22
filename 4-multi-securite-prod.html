@@ -36,7 +36,7 @@
             <rect class="box" x="450" y="150" width="170" height="56" rx="10"/><text x="535" y="176" text-anchor="middle" font-weight="700">Relecteur</text><text class="sm" x="535" y="194" text-anchor="middle">cherche les erreurs</text>
             <path class="ln" d="M280 66 L150 148" marker-end="url(#ar4)"/><path class="ln" d="M320 66 V148" marker-end="url(#ar4)"/><path class="ln" d="M360 66 L490 148" marker-end="url(#ar4)"/>
           </svg>
-          <p class="caption">Schéma « coordinateur et sous-agents », le plus courant.</p>
+          <p class="caption">Schéma « coordinateur et sous-agents », très utilisé.</p>
         </div>
         <div class="cols">
           <div class="card"><span class="tag">Avantages</span><ul><li>Contextes courts et ciblés</li><li>Travail en parallèle</li><li>Un relecteur indépendant détecte des erreurs que l'auteur ne voit pas</li></ul></div>
@@ -51,8 +51,8 @@
         <ul class="clean">
           <li><b>Coordinateur et sous-agents :</b> un chef découpe et délègue, des exécutants spécialisés traitent chaque morceau (en parallèle si indépendants).</li>
           <li><b>Enchaînement :</b> A transmet à B puis C (voir le chapitre <a href="2-outils-agents.html#c8">8</a>).</li>
-          <li><b>Évaluateur-optimiseur :</b> un agent produit, un autre critique (voir le chapitre <a href="2-outils-agents.html#c8">8</a>). Variante : le débat, où deux agents défendent des positions opposées et un troisième tranche.</li>
-          <li><b>Essaim :</b> nombreux agents identiques sur des morceaux du même problème (analyser 200 documents).</li>
+          <li><b>Évaluateur-optimiseur :</b> un agent produit, un autre critique (voir le chapitre <a href="2-outils-agents.html#c8">8</a>). Variante : le débat, où par exemple deux agents défendent des positions opposées et un troisième tranche.</li>
+          <li><b>Essaim (terme courant, non normalisé) :</b> nombreux agents identiques sur des morceaux du même problème (analyser 200 documents).</li>
         </ul>
         <h3>Ce qu'il faut préciser à chaque délégation</h3>
         <p>Le sous-agent ne voit <i>rien</i> de la conversation principale. La consigne de délégation doit donc contenir : l'objectif, le contexte nécessaire, le format de retour attendu, les limites (outils, périmètre) et ce qui est hors sujet.</p>
@@ -114,16 +114,16 @@
         <h3>Deux formes d'injection</h3>
         <ul class="clean">
           <li><b>Directe :</b> l'utilisateur tente lui-même de contourner les consignes (« oublie tes règles »).</li>
-          <li><b>Indirecte :</b> l'instruction malveillante est cachée dans une donnée que l'agent traite (page web, email, commentaire de code, PDF, description d'un outil). L'utilisateur légitime n'y est pour rien. C'est la plus dangereuse pour les agents.</li>
+          <li><b>Indirecte :</b> l'instruction malveillante est cachée dans une donnée que l'agent traite (page web, email, commentaire de code, PDF, description d'un outil). L'utilisateur légitime n'y est pour rien. C'est un vecteur particulièrement préoccupant pour les agents.</li>
         </ul>
-        <h3>La « triade létale »</h3>
+        <h3>La « triade létale » (cadre proposé par Simon Willison)</h3>
         <p>Le risque devient grave quand un même agent cumule trois propriétés :</p>
         <div class="cols">
           <div class="card"><h4>① Accès à des données privées</h4><p>Emails, fichiers, base clients, secrets.</p></div>
           <div class="card"><h4>② Exposition à du contenu non fiable</h4><p>Web, emails entrants, tickets, documents externes.</p></div>
           <div class="card"><h4>③ Capacité de communiquer vers l'extérieur</h4><p>Envoyer un email, appeler une URL, poster un commentaire.</p></div>
         </div>
-        <p>Avec les trois, un contenu piégé (②) peut ordonner à l'agent de lire un secret (①) et de l'envoyer à un attaquant (③). <b>Retirer l'une des trois pattes casse l'attaque.</b></p>
+        <p>Avec les trois, un contenu piégé (②) peut ordonner à l'agent de lire un secret (①) et de l'envoyer à un attaquant (③). <b>Retirer l'une des trois pattes réduit fortement le risque.</b></p>
         <h3>Les garde-fous essentiels</h3>
         <ul class="clean">
           <li><b>Moindre privilège :</b> n'accorder que les droits strictement nécessaires.</li>
