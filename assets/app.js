@@ -57,17 +57,55 @@
   ];
   var toc = $("#toc");
 
+  var ICONS = {
+    home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
+    panel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
+    close: '<path d="M6 6l12 12M18 6 6 18"/>',
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>'
+  };
+  function icon(name) {
+    var s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    s.setAttribute("viewBox", "0 0 24 24");
+    s.setAttribute("aria-hidden", "true");
+    s.setAttribute("class", "ico");
+    s.innerHTML = ICONS[name];
+    return s;
+  }
+  function iconBtn(cls, name, label) {
+    var b = el("button", { "class": "icon-btn " + cls, type: "button", "aria-label": label, title: label });
+    b.appendChild(icon(name));
+    return b;
+  }
+
   function buildToc() {
     if (!toc) return;
     var home = pages[0];
-    var homeLink = el("a", { href: home.file, "class": "home-link" + (cur === home ? " current" : "") }, "← " + home.title);
-    if (cur === home) homeLink.setAttribute("aria-current", "page");
-    toc.appendChild(homeLink);
-    toc.appendChild(el("p", { "class": "toc-title" }, "Ma progression"));
-    var bar = el("div", { "class": "progress", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": "0", id: "pbar" });
-    bar.appendChild(el("i"));
-    toc.appendChild(bar);
-    toc.appendChild(el("p", { "class": "progress-label", id: "plabel" }));
+    toc.id = toc.id || "toc";
+
+    /* en-tête de marque : lien vers l'accueil + replier (grand écran) ou fermer (petit écran) */
+    var head = el("div", { "class": "toc-head" });
+    var brand = el("a", { href: home.file, "class": "brand" + (cur === home ? " current" : "") });
+    if (cur === home) brand.setAttribute("aria-current", "page");
+    brand.appendChild(icon("home"));
+    brand.appendChild(el("span", {}, D.title));
+    head.appendChild(brand);
+    var collapse = iconBtn("toc-collapse", "panel", "Replier le sommaire");
+    collapse.setAttribute("aria-controls", toc.id);
+    collapse.setAttribute("aria-expanded", "true");
+    var close = iconBtn("toc-close", "close", "Fermer le sommaire");
+    head.appendChild(collapse);
+    head.appendChild(close);
+    toc.appendChild(head);
+
+    /* zone compacte : progression, niveau, recherche */
+    var tools = el("div", { "class": "toc-tools" });
+    var ph = el("div", { "class": "progress-head" });
+    ph.appendChild(el("p", { "class": "toc-title" }, "Ma progression"));
+    ph.appendChild(el("p", { "class": "progress-label", id: "plabel" }));
+    tools.appendChild(ph);
+    var pbar = el("div", { "class": "progress", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": "0", "aria-labelledby": "plabel", id: "pbar" });
+    pbar.appendChild(el("i"));
+    tools.appendChild(pbar);
 
     var ctl = el("div", { "class": "lvl-ctl", role: "group", "aria-labelledby": "lvl-title" });
     ctl.appendChild(el("p", { "class": "toc-title", id: "lvl-title" }, "Ton niveau"));
@@ -79,15 +117,17 @@
     });
     ctl.appendChild(opts);
     ctl.appendChild(el("p", { "class": "lvl-hint", id: "lvl-hint", "aria-live": "polite" }));
-    toc.appendChild(ctl);
+    tools.appendChild(ctl);
 
     var sw = el("div", { "class": "toc-search" });
     sw.appendChild(el("label", { "class": "sr-only", "for": "s-q" }, "Rechercher un chapitre ou un terme"));
     sw.appendChild(el("input", { id: "s-q", type: "search", placeholder: "Chercher un chapitre ou un terme…", autocomplete: "off" }));
     sw.appendChild(el("ul", { id: "s-res", hidden: "" }));
-    toc.appendChild(sw);
+    tools.appendChild(sw);
+    toc.appendChild(tools);
 
-
+    /* liste des pages, seule partie qui défile */
+    var scroll = el("div", { "class": "toc-scroll" });
     var list = el("ol", { id: "toc-list" });
     var lastPart = null;
     pages.forEach(function (p) {
@@ -118,29 +158,54 @@
       }
       list.appendChild(li);
     });
-    toc.appendChild(list);
-
+    scroll.appendChild(list);
     var tb = el("button", { "class": "theme-btn side", id: "theme-btn", type: "button" });
-    toc.appendChild(tb);
+    scroll.appendChild(tb);
+    toc.appendChild(scroll);
 
-    toc.id = toc.id || "toc";
-    var bar = el("div", { "class": "toc-bar" });
-    var toggle = el("button", { "class": "toc-toggle", type: "button", "aria-expanded": "false", "aria-controls": toc.id }, "☰ Sommaire");
-    bar.appendChild(toggle);
+    /* grand écran : repli mémorisé, bouton flottant pour rouvrir */
+    var root = document.documentElement;
+    var reopen = iconBtn("toc-reopen", "panel", "Afficher le sommaire");
+    reopen.setAttribute("aria-controls", toc.id);
+    reopen.setAttribute("aria-expanded", "false");
+    document.body.insertBefore(reopen, document.body.firstChild);
+    function setCollapsed(c, focus) {
+      root.classList.toggle("toc-collapsed", c);
+      collapse.setAttribute("aria-expanded", String(!c));
+      reopen.setAttribute("aria-expanded", String(!c));
+      store.set("toc:collapsed", c ? "1" : "0");
+      if (focus) (c ? reopen : collapse).focus();
+    }
+    setCollapsed(store.get("toc:collapsed") === "1", false);
+    /* l'état mémorisé s'applique sans animation ; les transitions s'activent après le premier rendu */
+    requestAnimationFrame(function () { requestAnimationFrame(function () { root.classList.add("toc-ready"); }); });
+    collapse.addEventListener("click", function () { setCollapsed(true, true); });
+    reopen.addEventListener("click", function () { setCollapsed(false, true); });
+
+    /* petit écran : barre du haut et tiroir */
+    var mbar = el("div", { "class": "toc-bar" });
+    var toggle = el("button", { "class": "toc-toggle", type: "button", "aria-expanded": "false", "aria-controls": toc.id });
+    toggle.appendChild(icon("menu"));
+    toggle.appendChild(el("span", {}, "Sommaire"));
+    mbar.appendChild(toggle);
+    mbar.appendChild(el("span", { "class": "toc-bar-title" }, cur === home ? D.title : cur.title));
+    mbar.appendChild(el("span", { "class": "cnt toc-bar-cnt", "data-cnt": cur.id, "aria-label": "Chapitres lus sur cette page" }));
     var backdrop = el("div", { "class": "toc-backdrop", hidden: "" });
-    document.body.appendChild(bar);
+    document.body.insertBefore(mbar, document.body.firstChild);
     document.body.appendChild(backdrop);
-    function setOpen(open) {
+    function setOpen(open, focus) {
       toc.classList.toggle("open", open);
       backdrop.hidden = !open;
       document.body.classList.toggle("toc-lock", open);
       toggle.setAttribute("aria-expanded", open);
+      if (focus) (open ? close : toggle).focus();
     }
-    toggle.addEventListener("click", function () { setOpen(!toc.classList.contains("open")); });
-    backdrop.addEventListener("click", function () { setOpen(false); });
-    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && toc.classList.contains("open")) { setOpen(false); toggle.focus(); } });
+    toggle.addEventListener("click", function () { setOpen(!toc.classList.contains("open"), true); });
+    close.addEventListener("click", function () { setOpen(false, true); });
+    backdrop.addEventListener("click", function () { setOpen(false, true); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && toc.classList.contains("open")) setOpen(false, true); });
     toc.addEventListener("click", function (e) {
-      if (e.target.closest("a") && window.matchMedia("(max-width: 899px)").matches) setOpen(false);
+      if (e.target.closest("a") && window.matchMedia("(max-width: 899px)").matches) setOpen(false, false);
     });
   }
 
@@ -152,9 +217,10 @@
     var pl = $("#plabel");
     if (pl) pl.textContent = n + " / " + allChapterIds.length + " chapitres lus";
     pages.forEach(function (p) {
-      var c = $("[data-cnt=\"" + p.id + "\"]");
       var ids = realChapters(p);
-      if (c) c.textContent = ids.length ? ids.filter(function (id) { return done[id]; }).length + "/" + ids.length : "";
+      $$("[data-cnt=\"" + p.id + "\"]").forEach(function (c) {
+        c.textContent = ids.length ? ids.filter(function (id) { return done[id]; }).length + "/" + ids.length : "";
+      });
     });
     $$(".toc a[data-target]").forEach(function (a) { a.classList.toggle("done", !!done[a.dataset.target]); });
     $$("[data-done]").forEach(function (b) {

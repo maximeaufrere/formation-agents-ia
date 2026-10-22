@@ -19,6 +19,10 @@ Une des deux grandes divisions du support : Partie 1 (fondamentaux des agents), 
 Couche de profondeur d'un chapitre. Trois niveaux, nommés Découverte, Intermédiaire, Expert ; chaque niveau inclut les précédents.
 _Avoid_: Niv. 1+2, Tout, profondeur, « Je veux lire »
 
+**Sommaire**:
+Panneau de navigation qui liste les pages et les chapitres, et regroupe la progression, le Sélecteur de niveau et la recherche. Repliable sur grand écran ; ouvert en tiroir sur petit écran.
+_Avoid_: TOC, menu, sidebar, barre latérale
+
 **Sélecteur de niveau**:
 Contrôle du sommaire qui fixe le niveau affiché ; intitulé « Ton niveau ». Le choix est mémorisé dans le navigateur.
 

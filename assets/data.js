@@ -1,6 +1,7 @@
 /* Source unique du support : pages, chapitres, parcours, glossaire, quiz, aide-mémoire.
    Toute modification de plan se fait ici ; sommaire, pagination, recherche et accueil en découlent. */
 window.COURS = {
+  title: "Comprendre les agents IA",
   verifiedOn: "22 oct. 2026",
 
   parts: { 1: "Partie 1 · Fondamentaux", 2: "Partie 2 · Claude Code", 3: "Ressources" },
